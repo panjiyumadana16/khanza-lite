@@ -701,6 +701,167 @@ class Admin extends AdminModule
 
     }
 
+    public function anyKontrol()
+    {
+      $rows = $this->core->mysql('booking_registrasi')
+        ->join('poliklinik', 'poliklinik.kd_poli=booking_registrasi.kd_poli')
+        ->join('dokter', 'dokter.kd_dokter=booking_registrasi.kd_dokter')
+        ->join('penjab', 'penjab.kd_pj=booking_registrasi.kd_pj')
+        ->where('no_rkm_medis', $_POST['no_rkm_medis'])
+        ->toArray();
+      $i = 1;
+      $result = [];
+      foreach ($rows as $row) {
+        $row['nomor'] = $i++;
+        $result[] = $row;
+      }
+      echo $this->draw('kontrol.html', ['booking_registrasi' => $result]);
+      exit();
+    }
+
+    public function postSaveKontrol()
+    {
+
+      $query = $this->core->mysql('skdp_bpjs')->save([
+        'tahun' => date('Y'),
+        'no_rkm_medis' => $_POST['no_rkm_medis'],
+        'diagnosa' => $_POST['diagnosa'],
+        'terapi' => $_POST['terapi'],
+        'alasan1' => $_POST['alasan1'],
+        'alasan2' => '',
+        'rtl1' => $_POST['rtl1'],
+        'rtl2' => $_POST['no_rawat'], //rtl2 digunakan untuk no rawat
+        'tanggal_datang' => $_POST['tanggal_datang'],
+        'tanggal_rujukan' => $_POST['tanggal_rujukan'],
+        'no_antrian' => $this->core->setNoSKDP(),
+        'kd_dokter' => $_POST['dokter'],
+        'status' => 'Menunggu'
+      ]);
+
+      if ($query) {
+        $this->core->mysql('booking_registrasi')
+          ->save([
+            'tanggal_booking' => date('Y-m-d'),
+            'jam_booking' => date('H:i:s'),
+            'no_rkm_medis' => $_POST['no_rkm_medis'],
+            'tanggal_periksa' => $_POST['tanggal_datang'],
+            'kd_dokter' => $_POST['dokter'],
+            'kd_poli' => $_POST['poli'],
+            'no_reg' => $this->core->setNoBooking($this->core->getUserInfo('username', null, true),$this->core->getRegPeriksaInfo('kd_poli', $no_rawat), $_POST['tanggal_datang']),
+            'kd_pj' => $this->core->getRegPeriksaInfo('kd_pj', $_POST['no_rawat']),
+            'limit_reg' => 0,
+            'waktu_kunjungan' => $_POST['tanggal_datang'].' '.date('H:i:s'),
+            'status' => 'Belum'
+          ]);
+      }
+
+      exit();
+    }
+
+    public function postKontrolData($act){
+      switch ($act) {
+        case 'get-poli':
+          if (!empty($_POST['tgl_datang'])) {
+            $tanggal = $_POST['tgl_datang'];
+            $tentukan_hari = date('D',strtotime($tanggal));
+            $day = array('Sun' => 'AKHAD', 'Mon' => 'SENIN', 'Tue' => 'SELASA', 'Wed' => 'RABU', 'Thu' => 'KAMIS', 'Fri' => 'JUMAT', 'Sat' => 'SABTU');
+            $hari=$day[$tentukan_hari];
+            $query = $this->core->mysql('jadwal')
+              ->select(['kd_poli' => 'jadwal.kd_poli'])
+              ->select(['nm_poli' => 'poliklinik.nm_poli'])
+              ->select(['jam_mulai' => 'jadwal.jam_mulai'])
+              ->select(['jam_selesai' => 'jadwal.jam_selesai'])
+              ->join('poliklinik', 'poliklinik.kd_poli = jadwal.kd_poli')
+              ->join('dokter', 'dokter.kd_dokter = jadwal.kd_dokter')
+              ->like('jadwal.hari_kerja', $hari)
+              ->toArray();
+              if(!empty($query)){
+                  $data['status'] = 'ok';
+                  $data['result'] = $query;
+              }else{
+                  $data['status'] = 'err';
+                  $data['result'] = '';
+              }
+              echo json_encode($data);
+          }
+          break;
+          case "get-dokter":
+          if(!empty($_POST['kd_poli']) && !empty($_POST['tgl_datang'])){
+              $tanggal = $_POST['tgl_datang'];
+              $tentukan_hari = date('D',strtotime($tanggal));
+              $day = array('Sun' => 'AKHAD', 'Mon' => 'SENIN', 'Tue' => 'SELASA', 'Wed' => 'RABU', 'Thu' => 'KAMIS', 'Fri' => 'JUMAT', 'Sat' => 'SABTU');
+              $hari=$day[$tentukan_hari];
+              $data = array();
+              $query = $this->core->mysql('jadwal')
+                ->select(['kd_dokter' => 'jadwal.kd_dokter'])
+                ->select(['nm_dokter' => 'dokter.nm_dokter'])
+                ->join('poliklinik', 'poliklinik.kd_poli = jadwal.kd_poli')
+                ->join('dokter', 'dokter.kd_dokter = jadwal.kd_dokter')
+                ->where('jadwal.kd_poli', $_POST['kd_poli'])
+                ->like('jadwal.hari_kerja', $hari)
+                ->toArray();
+              if(!empty($query)){
+                $data['status'] = 'ok';
+                $data['result'] = $query;
+              }else{
+                $data['status'] = 'err';
+                $data['result'] = '';
+              }
+              echo json_encode($data);
+            }
+          break;
+        default:
+          # code...
+          break;
+      }
+      exit();
+    }
+
+    public function postHapusKontrol()
+    {
+      $this->core->mysql('booking_registrasi')->where('kd_dokter', $_POST['kd_dokter'])->where('no_rkm_medis', $_POST['no_rkm_medis'])->where('tanggal_periksa', $_POST['tanggal_periksa'])->where('status', 'Belum')->delete();
+      $this->core->mysql('skdp_bpjs')->where('kd_dokter', $_POST['kd_dokter'])->where('no_rkm_medis', $_POST['no_rkm_medis'])->where('tanggal_datang', $_POST['tanggal_periksa'])->where('status', 'Menunggu')->delete();
+      exit();
+    }
+
+    public function getLihatSKDP()
+    {
+      $kd_dokter = $_GET['dokter'];
+      $no_rm = $_GET['no_rm'];
+      $tgl_datang = $_GET['tgl_datang'];
+
+      $hari = ['Minggu','Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'];
+
+      $settings = $this->settings('settings');
+      $this->tpl->set('settings', $this->tpl->noParse_array(htmlspecialchars_array($settings)));
+
+      $skdp = $this->core->mysql('skdp_bpjs')
+              ->join('booking_registrasi','booking_registrasi.kd_dokter = skdp_bpjs.kd_dokter')
+              ->join('pasien', 'pasien.no_rkm_medis = skdp_bpjs.no_rkm_medis')
+              ->join('poliklinik', 'poliklinik.kd_poli=booking_registrasi.kd_poli')
+              ->join('dokter', 'dokter.kd_dokter=booking_registrasi.kd_dokter')
+              ->join('kamar_inap', 'kamar_inap.no_rawat=skdp_bpjs.rtl2')
+              ->select([
+                'pasien.*',
+                'skdp_bpjs.*',
+                'kamar_inap.*',
+                'dokter.nm_dokter',
+                'booking_registrasi.*'
+              ])
+              ->where('skdp_bpjs.kd_dokter',$kd_dokter)
+              ->where('skdp_bpjs.no_rkm_medis',$no_rm)
+              ->where('skdp_bpjs.tanggal_datang',$tgl_datang)
+              ->oneArray();
+      
+      $skdp['umur'] = $this->hitungUmur($skdp['tgl_lahir']);
+
+      $skdp['hr_kontrol'] =  date('w',strtotime($skdp['tanggal_datang']));
+      $skdp['hr_kontrol'] = $hari[$skdp['hr_kontrol']];
+      // var_dump($skdp);
+      echo $this->draw('skdp.html', ['skdp' => $skdp]);
+      exit();
+    }
+
     public function anyBerkasDigital()
     {
       $berkas_digital = $this->core->mysql('berkas_digital_perawatan')->where('no_rawat', $_POST['no_rawat'])->toArray();
@@ -806,6 +967,20 @@ class Admin extends AdminModule
         setlocale(LC_ALL, 'en_EN');
         $text = str_replace('/', '', trim($text));
         return $text;
+    }
+
+    public function hitungUmur($tanggal_lahir)
+    {
+      	$birthDate = new \DateTime($tanggal_lahir);
+      	$today = new \DateTime("today");
+      	$umur = "0 Th 0 Bl 0 Hr";
+        if ($birthDate < $today) {
+        	$y = $today->diff($birthDate)->y;
+        	$m = $today->diff($birthDate)->m;
+        	$d = $today->diff($birthDate)->d;
+          $umur =  $y." Th ".$m." Bl ".$d." Hr";
+        }
+      	return $umur;
     }
 
     public function getJavascript()

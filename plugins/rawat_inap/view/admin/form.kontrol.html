@@ -1,0 +1,151 @@
+<div id="form_kontrol">
+  <div class="col-md-3">
+    <div class="panel panel-default">
+      <div class="panel-body">
+          <div class="form-group">
+            <label for="id_pendaftaran">Id Rawat</label>
+            <input type="text" name="no_rawat" placeholder="ID Pendaftaran" class="form-control" value="" readonly>
+          </div>
+          <div class="form-group">
+            <label for="id_pasien">Nomor RM</label>
+            <input type="text" name="no_rkm_medis" class="form-control" placeholder="Nomor Rekam Medik" value="" readonly>
+          </div>
+          <div class="form-group">
+            <label for="nama_pasien">Nama Pasien</label>
+            <input type="text" name="nm_pasien" class="form-control" placeholder="Nama pasien" value="" readonly>
+          </div>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-9">
+    <div class="panel panel-default">
+      <div class="panel-body">
+        <div class="row clearfix">
+            <div class="col-md-12">
+                <div class="form-group">
+                    <label>Diagnosa</label>
+                    <select name="diagnosa" id="icd10_kontrol" class="form-control">
+                    </select>
+                </div>
+            </div>
+            <div class="col-md-12">
+                <div class="form-group">
+                    <label>Tindakan / Terapi</label>
+                    <textarea type="text" name="terapi" class="form-control" rows="3"></textarea>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="form-group">
+                    <label>Alasan Kontrol</label>
+                    <textarea name="alasan1" class="form-control" rows="3"></textarea>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="form-group">
+                    <label>Rencana Tindak Lanjut</label>
+                    <textarea name="rtl1" class="form-control" rows="3"></textarea>
+                </div>
+            </div>
+            <div class="col-md-6">
+              <div class="form-group">
+                  <label>Tanggal Surat / Rujukan</label>
+                  <input type="text" name="tanggal_rujukan" class="form-control tanggal" value="{?=date('Y-m-d')?}" />
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="form-group">
+                  <label>Tanggal Datang</label>
+                  <input type="text" name="tanggal_datang" id="tanggal_datang" class="form-control tanggal" />
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="form-group">
+                  <label>Poliklinik</label>
+                  <select name="poli_kontrol" id="poli_kontrol" class="form-control">
+                  </select>
+              </div>
+          </div>
+          <div class="col-md-6">
+            <div class="form-group">
+                <label>Dokter</label>
+                <select name="dokter_kontrol" id="dokter_kontrol" class="form-control">
+                </select>
+            </div>
+          </div>
+        </div>
+        <div class="row clearfix">
+            <div class="col-md-12">
+                <button type="button" class="btn btn-primary" id="simpan_kontrol">Simpan</button>
+                <button type="button" class="btn btn-danger" id="selesai_kontrol">Selesai</button>
+            </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<br><br>
+<script>
+
+  if($('#form_kontrol').is(':visible')) {
+
+    $('#icd10_kontrol').selectator({
+      showAllOptionsOnFocus: true,
+      minSearchLength: 3,
+      load : function(search, callback){
+         if(search.length < this.minSearchLength) return callback();
+          var uri = "{?=url([ADMIN,'icd','icd10_kontrol','"+search+"'])?}";
+          $.get(uri, function(data){
+            data = JSON.parse(data)
+            callback(data.data)
+          })
+          .fail(function(){
+            callback()
+          })
+      },
+      valueField: 'icd10',
+      textField: 'icd10',
+      placeholder : 'Search ICD10 ...',
+    })
+    $(document).ready(function(){
+      $('#poli_kontrol').selectator('destroy')
+      $('#dokter_kontrol').selectator('destroy')
+    })
+
+    $('input[name=tanggal_datang]').on('dp.change', function(){
+        var uri = "{?=url([ADMIN,'rawat_inap','KontrolData','get-poli'])?}";
+        var tgl_datang = $('#tanggal_datang').val()
+        var option = '<option disabled selected> Pilih Poliklinik ... </option>'
+        
+        $.post(uri, {tgl_datang : tgl_datang}
+          ,function(data){
+            data = JSON.parse(data)
+            data = data.result
+            $.each(data, function(i){
+              option += '<option value="'+ data[i].kd_poli +'">'+ data[i].nm_poli +'</option>'
+            })
+            $('#poli_kontrol').html(option)
+            $('#dokter_kontrol').html('')
+        })
+    })
+
+  $('#poli_kontrol').change(function(){
+    var uri = "{?=url([ADMIN,'rawat_inap','KontrolData','get-dokter'])?}";
+    var tgl_datang = $('#tanggal_datang').val()
+    var kd_poli = $('#poli_kontrol').val()
+    var option = ''
+    if (tgl_datang == '' || kd_poli == '') {  
+      alert('Tanggal / poliklinik Belum dipilih!')
+    } else {
+      $.post(uri, {tgl_datang : tgl_datang, kd_poli : kd_poli}
+      ,function(data){
+        data = JSON.parse(data)
+        data = data.result
+        $.each(data, function(i){
+          option += '<option value="'+ data[i].kd_dokter +'">'+ data[i].nm_dokter +'</option>'
+        })
+        $('#dokter_kontrol').html(option)
+      })
+    }
+    })
+  }
+</script>

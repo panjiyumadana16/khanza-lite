@@ -2,6 +2,7 @@
 $("#form_rincian").hide();
 $("#form_soap").hide();
 $("#form_sep").hide();
+$("#form_kontrol").hide();
 $("#form_berkasdigital").hide();
 $("#histori_pelayanan").hide();
 $("#notif").hide();
@@ -948,4 +949,129 @@ $("#form_soap").on("click","#jam_rawat", function(event){
     } ,function(data) {
       $("#jam_rawat").val(data);
     });
+});
+
+// tombol batal diklik
+$("#form_kontrol").on("click", "#selesai_kontrol", function(event){
+  bersih();
+  $("#form_berkasdigital").hide();
+  $("#form_rincian").hide();
+  $("#form_soap").hide();
+  $("#form").show();
+  $("#display").show();
+  $("#rincian").hide();
+  $("#soap").hide();
+  $("#berkasdigital").hide();
+  $("#form_kontrol").hide();
+  $("#surat_kontrol").hide();
+});
+
+// ketika tombol hapus ditekan
+$("#surat_kontrol").on("click",".hapus_kontrol", function(event){
+  var baseURL = mlite.url + '/' + mlite.admin;
+  event.preventDefault();
+  var url = baseURL + '/rawat_inap/hapuskontrol?t=' + mlite.token;
+  var no_reg = $(this).attr("data-no_reg");
+  var tanggal_periksa = $(this).attr("data-tanggal_periksa");
+  var kd_dokter = $(this).attr("data-kd_dokter");
+  var kd_poli = $(this).attr("data-kd_poli");
+  var no_rkm_medis = $('input:text[name=no_rkm_medis]').val();
+  // tampilkan dialog konfirmasi
+  bootbox.confirm("Apakah Anda yakin ingin menghapus data ini?", function(result){
+    // ketika ditekan tombol ok
+    if (result){
+      // mengirimkan perintah penghapusan
+      $.post(url, {
+        no_reg: no_reg,
+        tanggal_periksa: tanggal_periksa,
+        kd_dokter: kd_dokter,
+        kd_poli: kd_poli,
+        no_rkm_medis: no_rkm_medis
+      } ,function(data) {
+        var url = baseURL + '/rawat_inap/kontrol?t=' + mlite.token;
+        $.post(url, {no_rkm_medis : no_rkm_medis,
+        }, function(data) {
+          // tampilkan data
+          $("#kontrol").html(data).show();
+          $("#surat_kontrol").html(data).show();
+        });
+        /*
+        $('input:text[name=suhu_tubuh]').val("");
+        $('input:text[name=tensi]').val("");
+        $('input:text[name=nadi]').val("");
+        $('input:text[name=respirasi]').val("");
+        $('input:text[name=tinggi]').val("");
+        $('input:text[name=berat]').val("");
+        $('input:text[name=gcs]').val("");
+        $('input:text[name=kesadaran]').val("");
+        $('input:text[name=alergi]').val("");
+        $('input:text[name=lingkar_perut]').val("");
+        $('textarea[name=keluhan]').val("");
+        $('textarea[name=pemeriksaan]').val("");
+        $('textarea[name=penilaian]').val("");
+        $('textarea[name=rtl]').val("");
+        $('textarea[name=instruksi]').val("");
+        $('input:text[name=tgl_perawatan]').val("{?=date('Y-m-d')?}");
+        $('input:text[name=tgl_registrasi]').val("{?=date('Y-m-d')?}");
+        $('input:text[name=jam_rawat]').val("{?=date('H:i:s')?}");
+        */
+        $('#notif').html("<div class=\"alert alert-danger alert-dismissible fade in\" role=\"alert\" style=\"border-radius:0px;margin-top:-15px;\">"+
+        "Data rincian riwayat telah dihapus!"+
+        "<button type=\"button\" class=\"close\" data-dismiss=\"alert\" aria-label=\"Close\">&times;</button>"+
+        "</div>").show();
+      });
+    }
+  });
+});
+
+// ketika tombol simpan diklik
+$("#form_kontrol").on("click", "#simpan_kontrol", function(event){
+  var baseURL = mlite.url + '/' + mlite.admin;
+  event.preventDefault();
+
+  var no_rkm_medis    = $('input:text[name=no_rkm_medis]').val();
+  var no_rawat        = $('input:text[name=no_rawat]').val();
+  var tanggal_rujukan = $('input:text[name=tanggal_rujukan]').val();
+  var tanggal_datang  = $('input:text[name=tanggal_datang]').val();
+  var diagnosa        = $('select[name=diagnosa]').val();
+  var terapi          = $('textarea[name=terapi]').val();
+  var alasan1         = $('textarea[name=alasan1]').val();
+  var rtl1            = $('textarea[name=rtl1]').val();
+  var poli            = $('select[name=poli_kontrol]').val();
+  var dokter          = $('select[name=dokter_kontrol]').val();
+
+  var url = baseURL + '/rawat_inap/savekontrol?t=' + mlite.token;
+  $.post(url, {
+    no_rawat        : no_rawat,
+    no_rkm_medis    : no_rkm_medis,
+    tanggal_rujukan : tanggal_rujukan,
+    tanggal_datang  : tanggal_datang,
+    diagnosa        : diagnosa,
+    terapi          : terapi,
+    alasan1         : alasan1,
+    rtl1            : rtl1,
+    dokter          : dokter,
+    poli            : poli
+  }, function(data) {
+    // tampilkan data
+    $("#display").hide();
+    var url = baseURL + '/rawat_inap/kontrol?t=' + mlite.token;
+    $.post(url, {no_rkm_medis : no_rkm_medis,
+    }, function(data) {
+      // tampilkan data
+      $("#kontrol").html(data).show();
+      $("#surat_kontrol").html(data).show();
+    });
+    $('input:text[name=tanggal_datang]').val('');
+    $('select[name=diagnosa]').val('');
+    $('textarea[name=terapi]').val('');
+    $('textarea[name=alasan1]').val('');
+    $('textarea[name=rtl1]').val('');
+    $('select[name=poli_kontrol]').val('');
+    $('select[name=dokter_kontrol]').val('');
+    $('#notif').html("<div class=\"alert alert-success alert-dismissible fade in\" role=\"alert\" style=\"border-radius:0px;margin-top:-15px;\">"+
+    "Data surat kontrol telah disimpan!"+
+    "<button type=\"button\" class=\"close\" data-dismiss=\"alert\" aria-label=\"Close\">&times;</button>"+
+    "</div>").show();
+  });
 });

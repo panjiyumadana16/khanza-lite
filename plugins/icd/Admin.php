@@ -32,6 +32,19 @@ class Admin extends AdminModule
     exit();
   }
 
+  public function getICD10_kontrol($key)
+  {
+    $key = "%".$key."%";
+    $rows_icd10 = $this->data_icd('icd10')->like('kode', $key)->orLike('nama', $key)->asc('nama')->limit(10)->toArray();
+    $output = array();
+    foreach ($rows_icd10 as $rows) {
+      $output[]['icd10'] = $rows['kode'].' - '.$rows['nama'];
+    }
+    $return_array = array('data' => $output);
+    echo json_encode($return_array);
+    exit();
+  }
+
   public function getICD9()
   {
     $rows_icd9 = $this->data_icd('icd9')->toArray();
