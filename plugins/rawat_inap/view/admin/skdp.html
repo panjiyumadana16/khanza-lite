@@ -8,31 +8,6 @@
     <script type="text/javascript" src="{?=url()?}/assets/jscripts/jquery.min.js"></script>
     <script type="text/javascript" src="{?=url()?}/assets/jscripts/jquery.qrcode.js"></script>
     <script type="text/javascript" src="{?=url()?}/assets/jscripts/qrcode.js"></script>
-	<style>
-	th,td {padding:0px 0px 0px 0px;}
-	td {border: none;}
-	.float{
-		position:fixed;
-		width:120px;
-		height:40px;
-		bottom:40px;
-		right:40px;
-		background-color:#4C9A2A;
-		color:#FFF;
-		text-align:center;
-		box-shadow: 2px 2px 3px #999;
-	}
-    img {
-        -webkit-filter: grayscale(100%); /* Safari 6.0 - 9.0 */
-        filter: grayscale(100%);
-    }
-    .terapi{
-        vertical-align: top;
-        border-bottom: 1px solid rgb(150, 150, 150);
-        min-width: 100%;
-        text-align: justify;
-    }
-	</style>
 
 	<script>
 	function printContent(el){
@@ -67,13 +42,39 @@
 
 	<body>
 		<div id="faktur">
+          <style>
+	th,td {padding:0px 0px 0px 0px;}
+	td {border: none;}
+	.float{
+		position:fixed;
+		width:120px;
+		height:40px;
+		bottom:40px;
+		right:40px;
+		background-color:#4C9A2A;
+		color:#FFF;
+		text-align:center;
+		box-shadow: 2px 2px 3px #999;
+	}
+    img {
+        -webkit-filter: grayscale(100%); /* Safari 6.0 - 9.0 */
+        filter: grayscale(100%);
+    }
+    .terapi{
+        vertical-align: top;
+      	background-color: rgb(250, 250, 250);
+        border-bottom: 1px solid rgb(150, 150, 150);
+        min-width: 100%;
+        text-align: justify;
+    }
+	</style>
             <center>
 			<table style="font-size: 12pt;" rules='rows' width="800px" cellspacing="0">
 				<tr>
                     <td width="15%" style="text-align: center;">
                         <img src="{?=url($settings.logo)?}" alt="" srcset="" width="90%">
                     </td>
-					<td>
+					<td style="padding-left: 15px;">
                         <strong style="font-size: 20pt; text-transform: uppercase;" > {$settings.nama_instansi} {$settings.kota} </strong>
                         <span style="font-size: 10pt; line-height: 15px;">
 							<div>{$settings.alamat} - {$settings.kota} - {$settings.propinsi}</div>
@@ -96,7 +97,7 @@
                                 <td width="1%">:</td>
                                 <td>
                                     <div style="border-bottom: 1px solid rgb(150, 150, 150);">
-                                        {$skdp.nm_pasien} ( No. MR : <strong>{$skdp.no_rkm_medis}</strong> )
+                                        {$skdp.nm_pasien} ( No. MR : <strong>{$skdp.no_rm}</strong> )
                                     </div>
                                 </td>
                             </tr>
@@ -189,15 +190,20 @@
                                             <td width="48%">Terapi Pulang</td>
                                             <td width="2%">:</td>
                                             <td>
-                                                <span class="terapi"> {?=nl2br($skdp.terapi)?} </span>
+                                                <div class="terapi"> {?=nl2br($skdp.terapi)?} </div>
                                             </td>
                                         </tr>
                                         <tr style="vertical-align:top;">
-                                            <td width="48%" style="padding-top: 10px;">Keterangan</td>
-                                            <td width="2%">:</td>
-                                            <td>
-                                                <div class="terapi"> &nbsp; </div>
-                                                <div class="terapi"> &nbsp; </div>
+                                            <td width="48%" style="padding-top: 5px;">Keterangan</td>
+                                            <td width="2%" style="padding-top: 5px;">:</td>
+                                            <td style="padding-top: 5px;">
+                                                <div class="terapi"> 
+                                                    {if: $skdp.alasan2 == ''} 
+                                                        &nbsp;
+                                                    {else}
+                                                        {?=nl2br($skdp.alasan2)?} 
+                                                    {/if}
+                                                </div>
                                             </td>
                                         </tr>
                                     </table>

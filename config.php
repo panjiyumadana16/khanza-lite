@@ -5,8 +5,8 @@ if (!version_compare(PHP_VERSION, '5.5.0', '>=')) {
 
 define('DBHOST', '127.0.0.1');
 define('DBPORT', '3306');
-define('DBUSER', 'mlite_dev');
-define('DBPASS', 'mlite_dev');
+define('DBUSER', 'root');
+define('DBPASS', '');
 define('DBNAME', 'mlite_dev');
 
 // URL Webapps
@@ -47,6 +47,6 @@ define('BASIC_MODULES', serialize([
 ]));
 
 // Developer mode
-define('DEV_MODE', true);
+define('DEV_MODE', false);
 
 ?>

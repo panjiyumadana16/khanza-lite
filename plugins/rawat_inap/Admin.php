@@ -736,7 +736,7 @@ class Admin extends AdminModule
         'diagnosa' => $_POST['diagnosa'],
         'terapi' => $_POST['terapi'],
         'alasan1' => $_POST['alasan1'],
-        'alasan2' => '',
+        'alasan2' => $_POST['keterangan'], //alasan2 digunakan untuk keterangan skdp
         'rtl1' => $_POST['rtl1'],
         'rtl2' => $_POST['no_rawat'], //rtl2 digunakan untuk no rawat
         'tanggal_datang' => $_POST['tanggal_datang'],
@@ -844,17 +844,15 @@ class Admin extends AdminModule
       $this->tpl->set('settings', $this->tpl->noParse_array(htmlspecialchars_array($settings)));
 
       $skdp = $this->core->mysql('skdp_bpjs')
-              ->join('booking_registrasi','booking_registrasi.kd_dokter = skdp_bpjs.kd_dokter')
               ->join('pasien', 'pasien.no_rkm_medis = skdp_bpjs.no_rkm_medis')
-              ->join('poliklinik', 'poliklinik.kd_poli=booking_registrasi.kd_poli')
-              ->join('dokter', 'dokter.kd_dokter=booking_registrasi.kd_dokter')
+              ->join('dokter', 'dokter.kd_dokter=skdp_bpjs.kd_dokter')
               ->join('kamar_inap', 'kamar_inap.no_rawat=skdp_bpjs.rtl2')
               ->select([
+                'pasien.no_rkm_medis AS no_rm',
                 'pasien.*',
                 'skdp_bpjs.*',
                 'kamar_inap.*',
-                'dokter.nm_dokter',
-                'booking_registrasi.*'
+                'dokter.nm_dokter'
               ])
               ->where('skdp_bpjs.kd_dokter',$kd_dokter)
               ->where('skdp_bpjs.no_rkm_medis',$no_rm)
@@ -865,7 +863,7 @@ class Admin extends AdminModule
 
       $skdp['hr_kontrol'] =  date('w',strtotime($skdp['tanggal_datang']));
       $skdp['hr_kontrol'] = $hari[$skdp['hr_kontrol']];
-      // var_dump($skdp);
+      //var_dump($skdp);
       echo $this->draw('skdp.html', ['skdp' => $skdp]);
       exit();
     }

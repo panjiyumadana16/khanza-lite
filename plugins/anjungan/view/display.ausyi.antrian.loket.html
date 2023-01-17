@@ -26,6 +26,11 @@
         padding-bottom:20px;
         text-transform: uppercase;
       }
+      .antrian_judul_2 {
+        font-size:48px;
+        padding-bottom:20px;
+        text-transform: uppercase;
+      }
       .loket {
         padding: 0px; margin: -15px; margin: 50px 0; font-weight: bold;
       }
@@ -53,7 +58,7 @@
       .panel .panel-body {
         border-bottom: 2px solid lightgreen;
       }
-
+      
       .panel-body .no_antrian {
         font-size:150px;
         font-weight:lighter;
@@ -109,7 +114,7 @@
 <body>
   <div class="container-fluid">
     {if: !$show}
-    <h1 class="text-center text-white antrian_judul"><img class="logo" style="margin: 20px;" src="{?=url()?}/{$logo}" alt="" width="80px"> <br> Antrian Loket {$settings.nama_instansi}</h1>
+    <h1 class="text-center text-white antrian_judul"><img class="logo" style="margin: 10px;" src="{?=url()?}/{$logo}" alt="" width="100px"> <br> Loket Pendaftaran {$settings.nama_instansi} </span> </h1>
     <div class="loket">
       <div class="kanan row">
         <div  class="col-md-4">
@@ -171,7 +176,7 @@
 
   {? $loket=[1,2,3,4] ?}
   {? $no=1 ?}
-
+  
   {if: $show == 'pilih_loket'}
   <div align="center" style="font-size: 64px;color:white; text-shadow: 2px 2px 4px #000000; margin: 30px 0;" class="mt-2 mb-5">Pilih Loket Pemanggilan Antrian</div>
   <div class="container-fluid text-center" style="margin-top: 100px;">
@@ -215,7 +220,7 @@
     <div class="row">
         <div class="col-xs-12 col-sm-6 col-md-4 col-lg-4" style="margin-bottom: 10px;">
             <div class="card" style="background-color: white; color: #000; border-radius: 5px; border: 1px solid #fff;">
-                <div class="card-header"
+                <div class="card-header" 
                 style="font-size:32px; background: rgb(227, 227, 227); border-radius: 5px 5px 0 0; padding: 10px 0;" id="loading">Antrian A</div>
                 <div class="card-body">
                     <h5 class="card-title" style="font-size:72px; margin: 35px;" id="antrianA">A0</h5>
@@ -243,7 +248,7 @@
 
         <div class="col-xs-12 col-sm-6 col-md-4 col-lg-4" style="margin-bottom: 10px;">
           <div class="card" style="background-color: white; color: #000; border-radius: 5px; border: 1px solid #fff;">
-              <div class="card-header"
+              <div class="card-header" 
               style="font-size:32px; background: rgb(227, 227, 227); border-radius: 5px 5px 0 0; padding: 10px 0;" id="loading">Antrian B</div>
               <div class="card-body">
                   <h5 class="card-title" style="font-size:72px; margin: 35px;" id="antrianB">B0</h5>
@@ -271,7 +276,7 @@
 
       <div class="col-xs-12 col-sm-6 col-md-4 col-lg-4" style="margin-bottom: 10px;">
         <div class="card" style="background-color: white; color: #000; border-radius: 5px; border: 1px solid #fff;">
-            <div class="card-header"
+            <div class="card-header" 
             style="font-size:32px; background: rgb(227, 227, 227); border-radius: 5px 5px 0 0; padding: 10px 0;" id="loading">Antrian C</div>
             <div class="card-body">
                 <h5 class="card-title" style="font-size:72px; margin: 35px;" id="antrianC">C0</h5>
@@ -299,7 +304,7 @@
 
     <div class="col-xs-12 col-sm-12 col-md-12 col-lg-12" style="margin-bottom: 50px;">
       <div class="card" style="background-color: white; color: #000; border-radius: 5px;">
-        <div class="card-header"
+        <div class="card-header" 
             style="font-size:32px; background: rgb(255, 255, 255); border-radius: 5px 5px 0 0; padding: 5px 0;" id="loading">Form Pasien Baru</div>
         <div class="card-footer" style="background-color: rgb(148, 148, 148); border-radius: 0 0 5px 5px; padding: 5px;">
             <div class="text-center">
@@ -318,7 +323,7 @@
                         <input type="number" class="form-control form-control-lg " name="noantrian" placeholder="No Antrian"
                             style="font-size: 24px; height: 50px; border-radius: 0px 5px 5px 0px;">
                         </div>
-
+                      
                       <div class="col-md-6" style="padding-right: 10px;">
                         <input type="text" maxlength="6" class="form-control form-control-lg " name="norm" placeholder="No Rekam Medis"
                             style="font-size: 24px; height: 50px;">
@@ -344,7 +349,7 @@
     # Angka di Sebelah Kiri Tombol Pemanggil Menunjukan Jumlah Nomor Antrian Yang Telah diambil Pasien</br>
 </div>
   {/if}
-
+  
   <footer class="visible-lg visible-md bg-primary" style="padding:0;z-index:-1; display:none; background-color: #00000000;">
     <div class="canvas" style="display: none;">
       <p class="pull-right">
@@ -352,14 +357,13 @@
         {$powered}.
       </p>
       {if: $show}
-      <p><i class="fa fa-fw fa-calendar"></i> <span>{$tanggal}</span> <i class="fa fa-fw fa-clock-o"></i><span id="clock"></span> <i class="fa fa-fw fa-user"></i> <span>{?= sprintf('Login sebagai <strong>%s</strong>', $username) ?}</span></p>
+      <p><i class="fa fa-fw fa-calendar"></i> <span id="dtloket"></span> <i class="fa fa-fw fa-clock-o"></i><span id="clock"></span> <i class="fa fa-fw fa-user"></i> <span>{?= sprintf('Login sebagai <strong>%s</strong>', $username) ?}</span></p>
       {/if}
     </div>
   </footer>
 
   <script type="text/javascript">
-
-  function showDate(){
+    function showDate(){
       var months = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
       var myDays = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jum&#39;at', 'Sabtu'];
       var date = new Date();
@@ -371,8 +375,8 @@
       var year = (yy < 1000) ? yy + 1900 : yy;
       document.getElementById('dtloket').innerHTML = thisDay + ', ' + day + ' ' + months[month] + ' ' + year;
     }
-  setInterval(showDate, 500);
-
+    setInterval(showDate, 500);
+    
   function showTime() {
       var a_p = "";
       var today = new Date();
@@ -533,7 +537,7 @@
           })
       }
       setInterval(getAntrianA, 1000);
-
+    
       function nextA() {
           $.ajax({
               type: "GET",
@@ -554,7 +558,7 @@
           })
       }
       setInterval(getAntrianB, 1000);
-
+    
       function nextB() {
           $.ajax({
               type: "GET",
@@ -575,7 +579,7 @@
           })
       }
       setInterval(getAntrianC, 1000);
-
+    
       function nextC() {
           $.ajax({
               type: "GET",
@@ -629,7 +633,7 @@
         })
         playA();
       }
-
+      
       function getAudioB() {
       $.ajax({
             type: "GET",
@@ -640,7 +644,7 @@
         })
         playB();
       }
-
+      
       function getAudioC() {
       $.ajax({
             type: "GET",
@@ -672,7 +676,8 @@
       }
 
 </script>
-  <script src="{?=url()?}/plugins/anjungan/js/antrian.js"></script>
   {/if}
+
+  <script src="{?=url()?}/plugins/anjungan/js/antrian.js"></script>
 </body>
 </html>

@@ -197,7 +197,7 @@ class Site extends SiteModule
 
     public function getAksiLoket()
     {
-      switch (isset($_GET['act'])) {
+      switch ($_GET['act']) {
         case 'reseta':
           if (!isset($_GET['antrian'])){
               $this->core->db('mlite_settings')->where('module','anjungan')->where('field','no_antrian_loket')->update('value',0);
@@ -208,7 +208,7 @@ class Site extends SiteModule
               $this->core->db('mlite_settings')->where('module','anjungan')->where('field','konter_antrian_loket')->update('value',$_GET['loket']);
           }
           break;
-
+        
         case 'resetb':
           if (!isset($_GET['antrian'])){
             $this->core->db('mlite_settings')->where('module','anjungan')->where('field','no_antrian_cs')->update('value',0);
@@ -219,7 +219,7 @@ class Site extends SiteModule
               $this->core->db('mlite_settings')->where('module','anjungan')->where('field','konter_antrian_cs')->update('value',$_GET['loket']);
           }
           break;
-
+        
         case 'resetc':
           if (!isset($_GET['antrian'])){
             $this->core->db('mlite_settings')->where('module','anjungan')->where('field','no_antrian_igd')->update('value',0);
@@ -241,12 +241,12 @@ class Site extends SiteModule
             ->where('type','Loket')
             ->where('postdate', date('Y-m-d'))
             ->update(['end_time' => date('H:i:s'), 'loket' => $_GET['loket'], 'status' => 1 ]);
-
+            
             $this->core->db('mlite_settings')
             ->where('module','anjungan')
             ->where('field','no_antrian_loket')
             ->update('value',$_tcounter);
-
+            
             $this->core->db('mlite_settings')
             ->where('module','anjungan')
             ->where('field','konter_antrian_loket')
@@ -254,11 +254,11 @@ class Site extends SiteModule
           }
           echo 'A'.$tcounter;
           break;
-
+        
         case 'getaudioa' :
           $tcounter = $this->settings->get('anjungan.no_antrian_loket');
           $panjang = strlen($tcounter);
-
+          
           for ($i = 0; $i < $panjang; $i++) {
             echo '<audio id="suarabela' . $i . '" src="'.url().'/plugins/anjungan/suara/' . substr($tcounter, $i, 1) . '.wav" ></audio>';
           }
@@ -275,19 +275,19 @@ class Site extends SiteModule
           case 'getantrianb':
             $tcounter = $this->settings->get('anjungan.no_antrian_cs');
             $_tcounter = $tcounter + 1;
-
+  
             if (isset($_GET['loket'])) {
               $this->core->db('mlite_antrian_loket')
               ->where('noantrian',$_tcounter)
               ->where('type','CS')
               ->where('postdate', date('Y-m-d'))
               ->update(['end_time' => date('H:i:s'), 'loket' => $_GET['loket'], 'status' => 1 ]);
-
+              
               $this->core->db('mlite_settings')
               ->where('module','anjungan')
               ->where('field','no_antrian_cs')
               ->update('value',$_tcounter);
-
+              
               $this->core->db('mlite_settings')
               ->where('module','anjungan')
               ->where('field','konter_antrian_cs')
@@ -295,40 +295,40 @@ class Site extends SiteModule
             }
             echo 'B'.$tcounter;
             break;
-
+          
           case 'getaudiob' :
             $tcounter = $this->settings->get('anjungan.no_antrian_cs');
             $panjang = strlen($tcounter);
-
+            
             for ($i = 0; $i < $panjang; $i++) {
               echo '<audio id="suarabelb' . $i . '" src="'.url().'/plugins/anjungan/suara/' . substr($tcounter, $i, 1) . '.wav" ></audio>';
             }
-
+  
             $this->core->db('mlite_antrian_loket')
               ->where('noantrian',$tcounter)
               ->where('type','CS')
               ->where('postdate', date('Y-m-d'))
               ->update('status',2);
-
+  
             echo '<audio id="b" src="'.url().'/plugins/anjungan/suara/b.wav"  ></audio>';
             break;
 
             case 'getantrianc':
               $tcounter = $this->settings->get('anjungan.no_antrian_igd');
               $_tcounter = $tcounter + 1;
-
+    
               if (isset($_GET['loket'])) {
                 $this->core->db('mlite_antrian_loket')
                 ->where('noantrian',$_tcounter)
                 ->where('type','IGD')
                 ->where('postdate', date('Y-m-d'))
                 ->update(['end_time' => date('H:i:s'), 'loket' => $_GET['loket'], 'status' => 1 ]);
-
+                
                 $this->core->db('mlite_settings')
                 ->where('module','anjungan')
                 ->where('field','no_antrian_igd')
                 ->update('value',$_tcounter);
-
+                
                 $this->core->db('mlite_settings')
                 ->where('module','anjungan')
                 ->where('field','konter_antrian_igd')
@@ -336,27 +336,27 @@ class Site extends SiteModule
               }
               echo 'C'.$tcounter;
               break;
-
+            
             case 'getaudioc' :
               $tcounter = $this->settings->get('anjungan.no_antrian_igd');
               $panjang = strlen($tcounter);
-
+              
               for ($i = 0; $i < $panjang; $i++) {
                 echo '<audio id="suarabelc' . $i . '" src="'.url().'/plugins/anjungan/suara/' . substr($tcounter, $i, 1) . '.wav" ></audio>';
               }
-
+    
               $this->core->db('mlite_antrian_loket')
                 ->where('noantrian',$tcounter)
                 ->where('type','IGD')
                 ->where('postdate', date('Y-m-d'))
                 ->update('status',2);
-
+    
               echo '<audio id="c" src="'.url().'/plugins/anjungan/suara/c.wav"  ></audio>';
               break;
-
+            
             case 'getallantriana' :
-              $max = $this->core->db('mlite_antrian_loket')->where('type','Loket')->where('postdate', date('Y-m-d'))->desc('noantrian')->oneArray();
-
+              $max = $this->core->db('mlite_antrian_loket')->where('type','Loket')->where('postdate', date('Y-m-d'))->desc('kd')->oneArray();
+              
               $allantrian = 0;
 
               if(!empty($max)){
@@ -367,8 +367,8 @@ class Site extends SiteModule
               break;
 
             case 'getallantrianb' :
-              $max = $this->core->db('mlite_antrian_loket')->where('type','CS')->where('postdate', date('Y-m-d'))->desc('noantrian')->oneArray();
-
+              $max = $this->core->db('mlite_antrian_loket')->where('type','CS')->where('postdate', date('Y-m-d'))->desc('kd')->oneArray();
+              
               $allantrian = 0;
 
               if(!empty($max)){
@@ -377,10 +377,10 @@ class Site extends SiteModule
 
               echo $allantrian;
               break;
-
+            
             case 'getallantrianc' :
-              $max = $this->core->db('mlite_antrian_loket')->where('type','IGD')->where('postdate', date('Y-m-d'))->desc('noantrian')->oneArray();
-
+              $max = $this->core->db('mlite_antrian_loket')->where('type','IGD')->where('postdate', date('Y-m-d'))->desc('kd')->oneArray();
+              
               $allantrian = 0;
 
               if(!empty($max)){

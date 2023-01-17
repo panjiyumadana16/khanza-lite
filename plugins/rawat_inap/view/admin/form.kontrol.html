@@ -55,7 +55,7 @@
             <div class="col-md-6">
               <div class="form-group">
                   <label>Tanggal Datang</label>
-                  <input type="text" name="tanggal_datang" id="tanggal_datang" class="form-control tanggal" />
+                  <input type="text" name="tanggal_datang_skdp" id="tanggal_datang_skdp" class="form-control tanggal" />
               </div>
             </div>
             <div class="col-md-6">
@@ -72,6 +72,12 @@
                 </select>
             </div>
           </div>
+          <div class="col-md-12">
+                <div class="form-group">
+                    <label>Keterangan</label>
+                    <textarea type="text" name="keterangan" class="form-control" rows="3"></textarea>
+                </div>
+            </div>
         </div>
         <div class="row clearfix">
             <div class="col-md-12">
@@ -111,9 +117,9 @@
       $('#dokter_kontrol').selectator('destroy')
     })
 
-    $('input[name=tanggal_datang]').on('dp.change', function(){
+    $('input[name=tanggal_datang_skdp]').on('dp.change', function(){
         var uri = "{?=url([ADMIN,'rawat_inap','KontrolData','get-poli'])?}";
-        var tgl_datang = $('#tanggal_datang').val()
+        var tgl_datang = $('#tanggal_datang_skdp').val()
         var option = '<option disabled selected> Pilih Poliklinik ... </option>'
         
         $.post(uri, {tgl_datang : tgl_datang}
@@ -130,7 +136,7 @@
 
   $('#poli_kontrol').change(function(){
     var uri = "{?=url([ADMIN,'rawat_inap','KontrolData','get-dokter'])?}";
-    var tgl_datang = $('#tanggal_datang').val()
+    var tgl_datang = $('#tanggal_datang_skdp').val()
     var kd_poli = $('#poli_kontrol').val()
     var option = ''
     if (tgl_datang == '' || kd_poli == '') {  
