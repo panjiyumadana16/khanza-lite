@@ -111,8 +111,20 @@ $("#rincian").on("click","#cetak_hasil", function(event){
   var baseURL = mlite.url + '/' + mlite.admin;
   event.preventDefault();
   var no_rawat = $('input:text[name=no_rawat]').val();
+  var tgl_periksa = $(this).attr("data-tgl_periksa");
+  var jam = $(this).attr("data-jam_periksa");
   var status = $('input:text[name=status]').val();
-  window.open(baseURL + '/radiologi/cetakhasil?no_rawat=' + no_rawat + '&status=' + status + '&t=' + mlite.token);
+  window.open(baseURL + '/radiologi/cetakhasil?no_rawat=' + no_rawat + '&tgl_periksa=' + tgl_periksa + '&jam=' + jam + '&status=' + status + '&t=' + mlite.token);
+});
+
+$("#rincian").on("click",".cetak_hasil", function(event){
+  var baseURL = mlite.url + '/' + mlite.admin;
+  event.preventDefault();
+  var no_rawat = $('input:text[name=no_rawat]').val();
+  var tgl_periksa = $(this).attr("data-tgl_periksa");
+  var jam = $(this).attr("data-jam_periksa");
+  var status = $('input:text[name=status]').val();
+  window.open(baseURL + '/radiologi/cetakhasil?no_rawat=' + no_rawat + '&tgl_periksa=' + tgl_periksa + '&jam=' + jam + '&status=' + status + '&t=' + mlite.token);
 });
 
 $("#rincian").on("click","#cetak_permintaan", function(event){
@@ -515,11 +527,14 @@ $("#rincian").on("click",".hasil_radiologi", function(event){
       + '</form>'
       + '<div id="preview"></div>'
       + '</div>'
+      + '<div id="preview_hasil"></div>'
+      + '</div>'
       + '';
 
   // tampilkan dialog konfirmasi
   var box = bootbox.dialog({
     message: set_stok,
+    size: 'large',
     title: 'Input Hasil Radiologi',
     buttons: {
       main: {
@@ -596,6 +611,7 @@ $("#rincian").on("click",".hasil_radiologi", function(event){
   event.stopPropagation();
   return false;
 });
+
 // ketika tombol hapus ditekan
 $("#rincian").on("click",".validasi_permintaan_radiologi", function(event){
   event.preventDefault();

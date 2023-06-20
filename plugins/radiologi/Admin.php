@@ -68,13 +68,13 @@ class Admin extends AdminModule
         exit();
     }
 
-    public function _Display($tgl_kunjungan, $tgl_kunjungan_akhir, $status_periksa='', $status_pulang='', $status_bayar, $type)
+    public function _Display($tgl_kunjungan, $tgl_kunjungan_akhir, $status_periksa='', $status_pulang='', $status_bayar='', $type='')
     {
         $this->_addHeaderFiles();
 
         $this->assign['poliklinik']     = $this->core->mysql('poliklinik')->where('status', '1')->toArray();
         $this->assign['dokter']         = $this->core->mysql('dokter')->where('status', '1')->toArray();
-        $this->assign['penjab']       = $this->core->mysql('penjab')->toArray();
+        $this->assign['penjab']       = $this->core->mysql('penjab')->where('status', '1')->toArray();
         $this->assign['no_rawat'] = '';
         $this->assign['no_reg']     = '';
         $this->assign['tgl_registrasi']= date('Y-m-d');
@@ -214,7 +214,12 @@ class Admin extends AdminModule
               'jam_keluar' => date('H:i:s'),
               'no_rkm_medis' => '',
               'nm_pasien' => '',
+              'tgl_lahir' => '',
+              'jk' => '',
+              'alamat' => '',
+              'no_tlp' => '',
               'no_rawat' => '',
+              'no_reg' => '',
               'kd_dokter' => '',
               'kd_kamar' => '',
               'kd_pj' => '',
@@ -232,7 +237,7 @@ class Admin extends AdminModule
 
       $this->assign['poliklinik'] = $this->core->mysql('poliklinik')->where('status', '1')->toArray();
       $this->assign['dokter'] = $this->core->mysql('dokter')->where('status', '1')->toArray();
-      $this->assign['penjab'] = $this->core->mysql('penjab')->toArray();
+      $this->assign['penjab'] = $this->core->mysql('penjab')->where('status', '1')->toArray();
       $this->assign['no_rawat'] = '';
       $this->assign['no_reg']     = '';
       $this->assign['tgl_registrasi']= date('Y-m-d');
@@ -416,14 +421,42 @@ class Admin extends AdminModule
       $dokter_perujuk = $this->core->mysql('periksa_radiologi')
         ->join('pegawai', 'pegawai.nik=periksa_radiologi.dokter_perujuk')
         ->where('no_rawat', $_GET['no_rawat'])
-        ->group('no_rawat')
+        ->where('tgl_periksa', $_GET['tgl_periksa'])
+        ->where('jam', $_GET['jam'])
         ->oneArray();
+
+      // $rows_periksa_radiologi = $this->core->mysql('periksa_radiologi')
+      // ->join('jns_perawatan_radiologi', 'jns_perawatan_radiologi.kd_jenis_prw=periksa_radiologi.kd_jenis_prw')
+      // ->join('hasil_radiologi', 'hasil_radiologi.no_rawat=periksa_radiologi.no_rawat')
+      // ->where('periksa_radiologi.no_rawat', $_GET['no_rawat'])
+      // ->where('periksa_radiologi.status', $_GET['status'])
+      // ->group('periksa_radiologi.no_rawat')
+      // ->group('periksa_radiologi.tgl_periksa')
+      // ->group('periksa_radiologi.jam')
+      // ->toArray();
+      //
+      // $periksa_radiologi = [];
+      // $jumlah_total_radiologi = 0;
+      // $no_radiologi = 1;
+      // foreach ($rows_periksa_radiologi as $row) {
+      //   $jumlah_total_radiologi += $row['biaya'];
+      //   $row['nomor'] = $no_radiologi++;
+      //   $row['gambar_radiologi'] = $this->core->mysql('gambar_radiologi')
+      //     ->where('no_rawat', $_GET['no_rawat'])
+      //     ->toArray();
+      //   $periksa_radiologi[] = $row;
+      // }
 
       $rows_periksa_radiologi = $this->core->mysql('periksa_radiologi')
       ->join('jns_perawatan_radiologi', 'jns_perawatan_radiologi.kd_jenis_prw=periksa_radiologi.kd_jenis_prw')
-      ->join('hasil_radiologi', 'hasil_radiologi.no_rawat=periksa_radiologi.no_rawat')
-      ->where('periksa_radiologi.no_rawat', $_GET['no_rawat'])
+      ->join('reg_periksa', 'reg_periksa.no_rawat=periksa_radiologi.no_rawat')
+      ->join('dokter', 'dokter.kd_dokter=periksa_radiologi.kd_dokter')
+      ->join('penjab', 'penjab.kd_pj=reg_periksa.kd_pj')
+      ->join('petugas', 'petugas.nip=periksa_radiologi.nip')
       ->where('periksa_radiologi.status', $_GET['status'])
+      ->where('periksa_radiologi.no_rawat', $_GET['no_rawat'])
+      ->where('periksa_radiologi.tgl_periksa', $_GET['tgl_periksa'])
+      ->where('periksa_radiologi.jam', $_GET['jam'])
       ->toArray();
 
       $periksa_radiologi = [];
@@ -432,11 +465,21 @@ class Admin extends AdminModule
       foreach ($rows_periksa_radiologi as $row) {
         $jumlah_total_radiologi += $row['biaya'];
         $row['nomor'] = $no_radiologi++;
-        $row['gambar_radiologi'] = $this->core->mysql('gambar_radiologi')
-          ->where('no_rawat', $_GET['no_rawat'])
-          ->toArray();
+        $row['status_periksa'] = $_GET['status'];
         $periksa_radiologi[] = $row;
       }
+
+      $hasil_radiologi = $this->core->mysql('hasil_radiologi')
+        ->where('no_rawat', $_GET['no_rawat'])
+        ->where('tgl_periksa', $_GET['tgl_periksa'])
+        ->where('jam', $_GET['jam'])
+        ->toArray();
+
+      $gambar_radiologi = $this->core->mysql('gambar_radiologi')
+        ->where('no_rawat', $_GET['no_rawat'])
+        ->where('tgl_periksa', $_GET['tgl_periksa'])
+        ->where('jam', $_GET['jam'])
+        ->toArray();
 
       $pdf = new PDF_MC_Table('P','mm','Legal');
       $pdf->AddPage();
@@ -486,22 +529,39 @@ class Admin extends AdminModule
       $pdf->Cell(205 ,10,'',0,1);//end of line
       $pdf->SetFont('Arial', '', 11);
       $no_radiologi_pdf = 1;
+      $pdf->SetFont('Arial','B',13);
+      $pdf->Cell(45 ,4,'Pemeriksaan',0,0);//end of line
+      $pdf->Cell(5 ,4,':',0,1);//end of line
+      $pdf->SetFont('Arial', '', 11);
       foreach ($rows_periksa_radiologi as $row) {
         $row['nomor'] = $no_radiologi_pdf++;
-        $rows2 = $this->core->mysql('gambar_radiologi')
-          ->where('no_rawat', $_GET['no_rawat'])
-          ->toArray();
-        $pdf->Cell(45 ,4,'Pemeriksaan',0,0);//end of line
-        $pdf->Cell(5 ,4,':',0,0);//end of line
-        $pdf->Cell(150, 4,$row['nm_perawatan'],0,0);//end of line
-        $pdf->Cell(10 ,6,'',0,1);//end of line
+        $pdf->Cell(5 ,4,'- ',0,0);//end of line
+        $pdf->Cell(150, 4,$row['nm_perawatan'],0,1);//end of line
+      }
+
+      if($hasil_radiologi) {
+        $pdf->Cell(189 ,6,'',0,1);//end of line
+        $pdf->SetFont('Arial','B',13);
         $pdf->Cell(45 ,4,'Interpretasi',0,0);//end of line
-        $pdf->Cell(5 ,4,':',0,0);//end of line
-        $pdf->Cell(150, 4,$row['hasil'],0,0);//end of line
-        foreach ($rows2 as $row2) {
-          $pdf->Cell(10 ,4,'',0,1);//end of line
-          $pdf->Cell(0, 4, $pdf->Image(WEBAPPS_PATH.'/radiologi/'.$row2['lokasi_gambar'], $pdf->GetX(), $pdf->GetY(),160,0,'png'), 0, 0, 'C', false);
-        }
+        $pdf->Cell(5 ,4,':',0,1);//end of line
+        $pdf->SetFont('Arial', '', 11);
+      }
+
+      foreach ($hasil_radiologi as $row1) {
+        $pdf->Cell(150, 4,$row1['hasil'],0,1);//end of line
+      }
+
+      if($gambar_radiologi){
+        $pdf->Cell(189 ,6,'',0,1);//end of line
+        $pdf->SetFont('Arial','B',13);
+        $pdf->Cell(45 ,4,'Gambar',0,0);//end of line
+        $pdf->Cell(5 ,4,':',0,1);//end of line
+        $pdf->SetFont('Arial', '', 11);
+      }
+
+      foreach ($gambar_radiologi as $row2) {
+        $pdf->Cell(10 ,4,'',0,1);//end of line
+        $pdf->Cell(0, 4, $pdf->Image(WEBAPPS_PATH.'/radiologi/'.$row2['lokasi_gambar'], $pdf->GetX(), $pdf->GetY(),160,0,'png'), 0, 0, 'C', false);
       }
 
       $pdf->Cell(189 ,10,'',0,1);//end of line
@@ -529,6 +589,8 @@ class Admin extends AdminModule
 
       echo $this->draw('cetakhasil.html', [
         'periksa_radiologi' => $periksa_radiologi,
+        'hasil_radiologi' => $hasil_radiologi,
+        'gambar_radiologi' => $gambar_radiologi,
         'jumlah_total_radiologi' => $jumlah_total_radiologi,
         'qrCode' => $qrCode,
         'pj_radiologi' => $pj_radiologi['nm_dokter'],
@@ -672,42 +734,41 @@ class Admin extends AdminModule
     public function anyRincian()
     {
 
-      $check_db = $this->core->mysql()->pdo()->query("SHOW TABLES LIKE 'permintaan_radiologi'");
-      $check_db->execute();
-      $check_db = $check_db->fetch();
-
+      $rows = $this->core->mysql('permintaan_radiologi')
+        ->join('dokter', 'dokter.kd_dokter=permintaan_radiologi.dokter_perujuk')
+        ->where('no_rawat', $_POST['no_rawat'])
+        ->where('permintaan_radiologi.status', strtolower($_POST['status']))
+        ->toArray();
       $radiologi = [];
-      if($check_db) {
-        $rows = $this->core->mysql('permintaan_radiologi')
-          ->join('dokter', 'dokter.kd_dokter=permintaan_radiologi.dokter_perujuk')
-          ->where('no_rawat', $_POST['no_rawat'])
-          ->where('permintaan_radiologi.status', strtolower($_POST['status']))
+      foreach ($rows as $row) {
+        $rows2 = $this->core->mysql('permintaan_pemeriksaan_radiologi')
+          ->join('jns_perawatan_radiologi', 'jns_perawatan_radiologi.kd_jenis_prw=permintaan_pemeriksaan_radiologi.kd_jenis_prw')
+          ->where('permintaan_pemeriksaan_radiologi.noorder', $row['noorder'])
           ->toArray();
-        $radiologi = [];
-        foreach ($rows as $row) {
-          $rows2 = $this->core->mysql('permintaan_pemeriksaan_radiologi')
-            ->join('jns_perawatan_radiologi', 'jns_perawatan_radiologi.kd_jenis_prw=permintaan_pemeriksaan_radiologi.kd_jenis_prw')
-            ->where('permintaan_pemeriksaan_radiologi.noorder', $row['noorder'])
-            ->toArray();
-            $row['permintaan_pemeriksaan_radiologi'] = [];
-            foreach ($rows2 as $row2) {
-              $row2['noorder'] = $row2['noorder'];
-              $row2['kd_jenis_prw'] = $row2['kd_jenis_prw'];
-              $row2['stts_bayar'] = $row2['stts_bayar'];
-              $row2['nm_perawatan'] = $row2['nm_perawatan'];
-              $row2['kd_pj'] = $row2['kd_pj'];
-              $row2['status'] = $row2['status'];
-              $row2['kelas'] = $row2['kelas'];
-              $row['permintaan_pemeriksaan_radiologi'][] = $row2;
-            }
-          $radiologi[] = $row;
-        }
+          $row['permintaan_pemeriksaan_radiologi'] = [];
+          foreach ($rows2 as $row2) {
+            $row2['noorder'] = $row2['noorder'];
+            $row2['kd_jenis_prw'] = $row2['kd_jenis_prw'];
+            $row2['stts_bayar'] = $row2['stts_bayar'];
+            $row2['nm_perawatan'] = $row2['nm_perawatan'];
+            $row2['kd_pj'] = $row2['kd_pj'];
+            $row2['status'] = $row2['status'];
+            $row2['kelas'] = $row2['kelas'];
+            $row['permintaan_pemeriksaan_radiologi'][] = $row2;
+          }
+        $radiologi[] = $row;
       }
 
       $rows_periksa_radiologi = $this->core->mysql('periksa_radiologi')
-      ->join('jns_perawatan_radiologi', 'jns_perawatan_radiologi.kd_jenis_prw=periksa_radiologi.kd_jenis_prw')
+      ->join('reg_periksa', 'reg_periksa.no_rawat=periksa_radiologi.no_rawat')
+      ->join('dokter', 'dokter.kd_dokter=periksa_radiologi.kd_dokter')
+      ->join('penjab', 'penjab.kd_pj=reg_periksa.kd_pj')
+      ->join('petugas', 'petugas.nip=periksa_radiologi.nip')
       ->where('periksa_radiologi.status', $_POST['status'])
-      ->where('no_rawat', $_POST['no_rawat'])
+      ->where('periksa_radiologi.no_rawat', $_POST['no_rawat'])
+      ->group('periksa_radiologi.no_rawat')
+      ->group('tgl_periksa')
+      ->group('jam')
       ->toArray();
 
       $periksa_radiologi = [];
@@ -717,12 +778,27 @@ class Admin extends AdminModule
         $jumlah_total_radiologi += $row['biaya'];
         $row['nomor'] = $no_radiologi++;
         $row['status_periksa'] = $_POST['status'];
-        $row['hasil_radiologi'] = $this->core->mysql('hasil_radiologi')->where('no_rawat', $_POST['no_rawat'])->toArray();
-        $row['gambar_radiologi'] = $this->core->mysql('gambar_radiologi')->where('no_rawat', $_POST['no_rawat'])->toArray();
+        $row['periksa_radiologi'] = $this->core->mysql('periksa_radiologi')
+          ->join('jns_perawatan_radiologi', 'jns_perawatan_radiologi.kd_jenis_prw=periksa_radiologi.kd_jenis_prw')
+          ->where('periksa_radiologi.status', $_POST['status'])
+          ->where('no_rawat', $_POST['no_rawat'])
+          ->where('tgl_periksa', $row['tgl_periksa'])
+          ->where('jam', $row['jam'])
+          ->toArray();
+        $row['hasil_radiologi'] = $this->core->mysql('hasil_radiologi')
+          ->where('no_rawat', $_POST['no_rawat'])
+          ->where('tgl_periksa', $row['tgl_periksa'])
+          ->where('jam', $row['jam'])
+          ->toArray();
+        $row['gambar_radiologi'] = $this->core->mysql('gambar_radiologi')
+          ->where('no_rawat', $_POST['no_rawat'])
+          ->where('tgl_periksa', $row['tgl_periksa'])
+          ->where('jam', $row['jam'])
+          ->toArray();
         $periksa_radiologi[] = $row;
       }
 
-      echo $this->draw('rincian.html', ['periksa_radiologi' => $periksa_radiologi, 'jumlah_total_radiologi' => $jumlah_total_radiologi, 'no_rawat' => $_POST['no_rawat'], 'radiologi' => $radiologi, 'check_permintaan_radiologi' => $check_db]);
+      echo $this->draw('rincian.html', ['periksa_radiologi' => $periksa_radiologi, 'jumlah_total_radiologi' => $jumlah_total_radiologi, 'no_rawat' => $_POST['no_rawat'], 'radiologi' => $radiologi]);
       exit();
     }
 
@@ -857,6 +933,7 @@ class Admin extends AdminModule
         if (!file_exists($dir)) {
             mkdir(WEBAPPS_PATH."/radiologi", 0777);
             mkdir(WEBAPPS_PATH."/radiologi/pages", 0777);
+            mkdir(WEBAPPS_PATH."/radiologi/pages/upload", 0777);
             mkdir($dir, 0777, true);
         }
 

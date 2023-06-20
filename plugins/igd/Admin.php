@@ -67,7 +67,7 @@ class Admin extends AdminModule
 
         $this->assign['poliklinik']     = $this->core->mysql('poliklinik')->where('status', '1')->toArray();
         $this->assign['dokter']         = $this->core->mysql('dokter')->where('status', '1')->toArray();
-        $this->assign['penjab']       = $this->core->mysql('penjab')->toArray();
+        $this->assign['penjab']       = $this->core->mysql('penjab')->where('status', '1')->toArray();
         $this->assign['no_rawat'] = '';
         $this->assign['no_reg']     = '';
         $this->assign['tgl_registrasi']= date('Y-m-d');
@@ -152,7 +152,7 @@ class Admin extends AdminModule
 
       $this->assign['poliklinik'] = $this->core->mysql('poliklinik')->where('status', '1')->toArray();
       $this->assign['dokter'] = $this->core->mysql('dokter')->where('status', '1')->toArray();
-      $this->assign['penjab'] = $this->core->mysql('penjab')->toArray();
+      $this->assign['penjab'] = $this->core->mysql('penjab')->where('status', '1')->toArray();
       $this->assign['no_rawat'] = '';
       $this->assign['no_reg']     = '';
       $this->assign['tgl_registrasi']= date('Y-m-d');
@@ -234,7 +234,7 @@ class Admin extends AdminModule
             $bg_status = 'has-error';
           } else {
             $result = $this->core->mysql('reg_periksa')->where('no_rkm_medis', $_POST['no_rkm_medis'])->oneArray();
-            if($result >= 1) {
+            if(!empty($result['no_rawat'])) {
               $stts_daftar = 'Lama';
               $bg_status = 'has-info';
               $stts_daftar_hidden = $stts_daftar;
@@ -395,7 +395,7 @@ class Admin extends AdminModule
             'tarif_tindakanpr' => $jns_perawatan['tarif_tindakanpr'],
             'kso' => $jns_perawatan['kso'],
             'menejemen' => $jns_perawatan['menejemen'],
-            'biaya_rawat' => $jns_perawatan['total_byrdr'],
+            'biaya_rawat' => $jns_perawatan['total_byrpr'],
             'stts_bayar' => 'Belum'
           ]);
         }
@@ -413,63 +413,46 @@ class Admin extends AdminModule
             'tarif_tindakanpr' => $jns_perawatan['tarif_tindakanpr'],
             'kso' => $jns_perawatan['kso'],
             'menejemen' => $jns_perawatan['menejemen'],
-            'biaya_rawat' => $jns_perawatan['total_byrdr'],
+            'biaya_rawat' => $jns_perawatan['total_byrdrpr'],
             'stts_bayar' => 'Belum'
           ]);
         }
       }
       if($_POST['kat'] == 'obat') {
 
-        $cek_resep = $this->core->mysql('resep_obat')->where('no_rawat', $_POST['no_rawat'])->where('tgl_peresepan', $_POST['tgl_perawatan'])->oneArray();
-        if(!$cek_resep) {
-          $max_id = $this->core->mysql('resep_obat')->select(['no_resep' => 'ifnull(MAX(CONVERT(RIGHT(no_resep,4),signed)),0)'])->where('tgl_peresepan', $_POST['tgl_perawatan'])->oneArray();
-          if(empty($max_id['no_resep'])) {
-            $max_id['no_resep'] = '0000';
-          }
-          $_next_no_resep = sprintf('%04s', ($max_id['no_resep'] + 1));
-          $no_resep = date('Ymd').''.$_next_no_resep;
+        $no_resep = $this->core->setNoResep($_POST['tgl_perawatan']);
+        $cek_resep = $this->core->mysql('resep_obat')->where('no_rawat', $_POST['no_rawat'])->where('tgl_peresepan', $_POST['tgl_perawatan'])->where('tgl_perawatan', '0000-00-00')->oneArray();
 
-          $check_db = $this->core->mysql()->pdo()->query("SHOW COLUMNS FROM `resep_obat` LIKE 'tgl_penyerahan'");
-          $check_db->execute();
-          $check_db = $check_db->fetch();
-          $resep_obat = '';
-          if($check_db) {
-            $resep_obat = $this->core->mysql('resep_obat')
-              ->save([
-                'no_resep' => $no_resep,
-                'tgl_perawatan' => '0000-00-00',
-                'jam' => '00:00:00',
-                'no_rawat' => $_POST['no_rawat'],
-                'kd_dokter' => $_POST['kode_provider'],
-                'tgl_peresepan' => $_POST['tgl_perawatan'],
-                'jam_peresepan' => $_POST['jam_rawat'],
-                'status' => 'ralan',
-                'tgl_penyerahan' => '0000-00-00',
-                'jam_penyerahan' => '00:00:00'
-              ]);
-          } else {
-            $resep_obat = $this->core->mysql('resep_obat')
-              ->save([
-                'no_resep' => $no_resep,
-                'tgl_perawatan' => '0000-00-00',
-                'jam' => '00:00:00',
-                'no_rawat' => $_POST['no_rawat'],
-                'kd_dokter' => $_POST['kode_provider'],
-                'tgl_peresepan' => $_POST['tgl_perawatan'],
-                'jam_peresepan' => $_POST['jam_rawat'],
-                'status' => 'ralan'
-              ]);
-          }
-          $this->core->mysql('resep_dokter')
+        if(empty($cek_resep)) {
+
+          $resep_obat = $this->core->mysql('resep_obat')
             ->save([
               'no_resep' => $no_resep,
-              'kode_brng' => $_POST['kd_jenis_prw'],
-              'jml' => $_POST['jml'],
-              'aturan_pakai' => $_POST['aturan_pakai']
+              'tgl_perawatan' => '0000-00-00',
+              'jam' => '00:00:00',
+              'no_rawat' => $_POST['no_rawat'],
+              'kd_dokter' => $_POST['kode_provider'],
+              'tgl_peresepan' => $_POST['tgl_perawatan'],
+              'jam_peresepan' => $_POST['jam_rawat'],
+              'status' => 'ralan',
+              'tgl_penyerahan' => '0000-00-00',
+              'jam_penyerahan' => '00:00:00'
             ]);
+
+          if ($this->core->mysql('resep_obat')->where('no_resep', $no_resep)->where('kd_dokter', $_POST['kode_provider'])->oneArray()) {
+            $this->core->mysql('resep_dokter')
+              ->save([
+                'no_resep' => $no_resep,
+                'kode_brng' => $_POST['kd_jenis_prw'],
+                'jml' => $_POST['jml'],
+                'aturan_pakai' => $_POST['aturan_pakai']
+              ]);
+          }
 
         } else {
+
           $no_resep = $cek_resep['no_resep'];
+
           $this->core->mysql('resep_dokter')
             ->save([
               'no_resep' => $no_resep,
@@ -477,6 +460,7 @@ class Admin extends AdminModule
               'jml' => $_POST['jml'],
               'aturan_pakai' => $_POST['aturan_pakai']
             ]);
+
         }
 
       }
@@ -647,25 +631,8 @@ class Admin extends AdminModule
 
     public function postSaveSOAP()
     {
-      $check_db = $this->core->mysql()->pdo()->query("SHOW COLUMNS FROM `pemeriksaan_ralan` LIKE 'evaluasi'");
-      $check_db->execute();
-      $check_db = $check_db->fetch();
+      $_POST['nip'] = $this->core->getUserInfo('username', null, true);
 
-      $check_db2 = $this->core->mysql()->pdo()->query("SHOW COLUMNS FROM `pemeriksaan_ralan` LIKE 'instruksi'");
-      $check_db2->execute();
-      $check_db2 = $check_db2->fetch();
-
-      if($check_db) {
-        $_POST['nip'] = $this->core->getUserInfo('username', null, true);
-      } else if($check_db2) {
-        $_POST['nip'] = $this->core->getUserInfo('username', null, true);
-        unset($_POST['spo2']);
-        unset($_POST['evaluasi']);
-      } else {
-        unset($_POST['spo2']);
-        unset($_POST['evaluasi']);
-        unset($_POST['instruksi']);
-      }
       if(!$this->core->mysql('pemeriksaan_ralan')->where('no_rawat', $_POST['no_rawat'])->where('tgl_perawatan', $_POST['tgl_perawatan'])->where('jam_rawat', $_POST['jam_rawat'])->oneArray()) {
         $this->core->mysql('pemeriksaan_ralan')->save($_POST);
       } else {
@@ -733,24 +700,50 @@ class Admin extends AdminModule
 
     public function postSaveBerkasDigital()
     {
+      if(MULTI_APP) {
 
-      $dir    = $this->_uploads;
-      $cntr   = 0;
+        $curl = curl_init();
+        $filePath = $_FILES['file']['tmp_name'];
 
-      $image = $_FILES['file']['tmp_name'];
-      $img = new \Systems\Lib\Image();
-      $id = convertNorawat($_POST['no_rawat']);
-      if ($img->load($image)) {
-          $imgName = time().$cntr++;
-          $imgPath = $dir.'/'.$id.'_'.$imgName.'.'.$img->getInfos('type');
-          $lokasi_file = 'pages/upload/'.$id.'_'.$imgName.'.'.$img->getInfos('type');
-          $img->save($imgPath);
-          $query = $this->core->mysql('berkas_digital_perawatan')->save(['no_rawat' => $_POST['no_rawat'], 'kode' => $_POST['kode'], 'lokasi_file' => $lokasi_file]);
-          if($query) {
-            echo '<br><img src="'.WEBAPPS_URL.'/berkasrawat/'.$lokasi_file.'" width="150" />';
-          }
+        curl_setopt_array($curl, array(
+          CURLOPT_URL => str_replace('webapps','',WEBAPPS_URL).'api/berkasdigital',
+          CURLOPT_RETURNTRANSFER => true,
+          CURLOPT_ENCODING => '',
+          CURLOPT_MAXREDIRS => 10,
+          CURLOPT_TIMEOUT => 0,
+          CURLOPT_FOLLOWLOCATION => true,
+          CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
+          CURLOPT_CUSTOMREQUEST => 'POST',
+          CURLOPT_POSTFIELDS => array('file'=> new \CURLFILE($filePath),'token' => $this->settings->get('api.berkasdigital_key'), 'no_rawat' => $_POST['no_rawat'], 'kode' => $_POST['kode']),
+          CURLOPT_HTTPHEADER => array(),
+        ));
+
+        $response = curl_exec($curl);
+
+        curl_close($curl);
+        //echo $response;
+        if($response == 'Success') {
+          echo '<br><img src="'.WEBAPPS_URL.'/berkasrawat/'.$lokasi_file.'" width="150" />';
+        }
+
+      } else {
+        $dir    = $this->_uploads;
+        $cntr   = 0;
+
+        $image = $_FILES['file']['tmp_name'];
+        $img = new \Systems\Lib\Image();
+        $id = convertNorawat($_POST['no_rawat']);
+        if ($img->load($image)) {
+            $imgName = time().$cntr++;
+            $imgPath = $dir.'/'.$id.'_'.$imgName.'.'.$img->getInfos('type');
+            $lokasi_file = 'pages/upload/'.$id.'_'.$imgName.'.'.$img->getInfos('type');
+            $img->save($imgPath);
+            $query = $this->core->mysql('berkas_digital_perawatan')->save(['no_rawat' => $_POST['no_rawat'], 'kode' => $_POST['kode'], 'lokasi_file' => $lokasi_file]);
+            if($query) {
+              echo '<br><img src="'.WEBAPPS_URL.'/berkasrawat/'.$lokasi_file.'" width="150" />';
+            }
+        }
       }
-
       exit();
 
     }
@@ -834,7 +827,12 @@ class Admin extends AdminModule
     public function getJavascript()
     {
         header('Content-type: text/javascript');
-        echo $this->draw(MODULES.'/igd/js/admin/igd.js');
+        $cek_pegawai = $this->core->mysql('pegawai')->where('nik', $this->core->getUserInfo('username', $_SESSION['mlite_user']))->oneArray();
+        $cek_role = '';
+        if($cek_pegawai) {
+          $cek_role = $this->core->getPegawaiInfo('nik', $this->core->getUserInfo('username', $_SESSION['mlite_user']));
+        }
+        echo $this->draw(MODULES.'/igd/js/admin/igd.js', ['cek_role' => $cek_role]);
         exit();
     }
 

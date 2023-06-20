@@ -11,3 +11,8 @@ backup/
 plugins/apotek_online
 plugins/simrsp
 config.php
+themes/mlite
+systems/lib/jasperphp
+plugins/jasper
+plugins/apam
+plugins/lisensi

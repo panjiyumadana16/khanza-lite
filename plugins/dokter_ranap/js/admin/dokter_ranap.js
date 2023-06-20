@@ -143,7 +143,7 @@ $('#manage').on('click', '#lunas_periode_rawat_inap', function(event){
 
 // ketika tombol simpan diklik
 $("#form_soap").on("click", "#simpan_soap", function(event){
-  {if: !$this->core->getPegawaiInfo('nik', $this->core->getUserInfo('username', $_SESSION['mlite_user']))}
+  {if: !$cek_role}
     bootbox.alert({
         title: "Pemberitahuan penggunaan!",
         message: "Silahkan login dengan akun non administrator (akun yang berelasi dengan modul kepegawaian)!"
@@ -393,6 +393,7 @@ $("#form_rincian").on("click", "#selesai", function(event){
   $("#info_tambahan").hide();
   $("#form_kontrol").hide();
   $("#kontrol").hide();
+  $("#surat_kontrol").hide();
 });
 
 // tombol batal diklik
@@ -409,6 +410,7 @@ $("#form_soap").on("click", "#selesai_soap", function(event){
   $("#info_tambahan").hide();
   $("#form_kontrol").hide();
   $("#kontrol").hide();
+  $("#surat_kontrol").hide();
 });
 
 // tombol batal diklik
@@ -425,6 +427,7 @@ $("#form_kontrol").on("click", "#selesai_kontrol", function(event){
   $("#info_tambahan").hide();
   $("#form_kontrol").hide();
   $("#kontrol").hide();
+  $("#surat_kontrol").hide();
 });
 
 // ketika inputbox pencarian diisi
@@ -1031,7 +1034,7 @@ $(document).ready(function () {
     load: function (search, callback) {
       if (search.length < this.minSearchLength) return callback();
       $.ajax({
-        url: '{?=url()?}/admin/dokter_ranap/ajax?show=databarang&nama_brng=' + encodeURIComponent(search) + '&t={?=$_SESSION['token']?}',
+        url: '{?=url()?}/{?=ADMIN?}/dokter_ranap/ajax?show=databarang&nama_brng=' + encodeURIComponent(search) + '&t={?=$_SESSION['token']?}',
         type: 'GET',
         dataType: 'json',
         success: function(data) {

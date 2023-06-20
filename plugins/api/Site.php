@@ -753,7 +753,7 @@ class Site extends SiteModule
                       ->where('mlite_news_tags_relationship.news_id', $row['id'])
                       ->select('name')
                       ->oneArray();
-                  $row['tag'] = $tags['name'];
+                  $row['tag'] = isset_or($tags['name']);
                   $row['tanggal'] = getDayIndonesia(date('Y-m-d', date($row['published_at']))).', '.dateIndonesia(date('Y-m-d', date($row['published_at'])));
                   $results[] = $row;
               }
@@ -1138,7 +1138,7 @@ class Site extends SiteModule
               $img->save($imgPath);
               $query = $this->core->mysql('berkas_digital_perawatan')->save(['no_rawat' => $_POST['no_rawat'], 'kode' => $_POST['kode'], 'lokasi_file' => $lokasi_file]);
               if($query) {
-                echo '<br><img src="'.WEBAPPS_URL.'/berkasrawat/'.$lokasi_file.'" width="150" />';
+                echo 'Success';
               }
           }
 
