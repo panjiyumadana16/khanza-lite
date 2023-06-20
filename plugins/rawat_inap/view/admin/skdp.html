@@ -197,13 +197,7 @@
                                             <td width="48%" style="padding-top: 5px;">Keterangan</td>
                                             <td width="2%" style="padding-top: 5px;">:</td>
                                             <td style="padding-top: 5px;">
-                                                <div class="terapi"> 
-                                                    {if: $skdp.alasan2 == ''} 
-                                                        &nbsp;
-                                                    {else}
-                                                        {?=nl2br($skdp.alasan2)?} 
-                                                    {/if}
-                                                </div>
+                                                <div class="terapi"> {?=nl2br($skdp.alasan2)?} </div>
                                             </td>
                                         </tr>
                                     </table>

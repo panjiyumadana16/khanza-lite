@@ -1462,6 +1462,215 @@ Ralan :
    {/if}
   </fieldset>
   <br><br><br>
+  {if: $skdp}
+  <!-- Berkas Digital -->
+  <fieldset style="page-break-before:always;">
+    <div id="faktur">
+      <style>
+        #table-skdp th,#table-skdp td {padding:0px 0px 0px 0px;}
+        #table-skdp td {border: none;}
+        #table-skdp .float{
+        position:fixed;
+        width:120px;
+        height:40px;
+        bottom:40px;
+        right:40px;
+        background-color:#4C9A2A;
+        color:#FFF;
+        text-align:center;
+        box-shadow: 2px 2px 3px #999;
+        }
+        img#logo-skdp {
+            -webkit-filter: grayscale(100%); /* Safari 6.0 - 9.0 */
+            filter: grayscale(100%);
+        }
+        .terapi{
+            vertical-align: top;
+            /*background-color: rgb(250, 250, 250);*/
+            border-bottom: 1px solid rgb(150, 150, 150);
+            min-width: 100%;
+            text-align: justify;
+        }
+      </style>
+      <center>
+        <table style="font-size: 12pt;border:0px solid #fff; max-width: 1000px; min-width: auto;" border="0" rules='rows' cellspacing="0" id="table_skdp">
+          <tr>
+            <td width="15%" style="text-align: center;">
+              <img id="logo-skdp" src="{?=url()?}/{$settings.logo}" alt="" srcset="" width="90%">
+            </td>
+            <td style="padding-left: 15px;">
+              <strong style="font-size: 20pt; text-transform: uppercase;" > {$settings.nama_instansi} {$settings.kota} </strong>
+              <span style="font-size: 10pt; line-height: 15px;">
+                <div>{$settings.alamat} - {$settings.kota} - {$settings.propinsi}</div>
+                <div>Telp. {$settings.nomor_telepon}</div>
+                <div>Website : {$settings.website}</div>
+                <div>E-mail : {$settings.email}</div>
+              </span>
+            </td>
+          </tr>
+          <tr>
+            <td style="font-size:14pt; text-align: center; font-weight: bold; padding-top: 32px; padding-bottom: 14px;" colspan="2">
+              SURAT KETERANGAN PULANG / KONTROL
+            </td>
+          </tr>
+          <tr>
+            <td colspan="2" width="100%">
+              <table width="100%">
+                <tr>
+                  <td width="24%">Nama</td>
+                  <td width="1%">:</td>
+                  <td>
+                    <div style="border-bottom: 1px solid rgb(150, 150, 150);">
+                      {$skdp.nm_pasien} ( No. MR : <strong>{$skdp.no_rm}</strong> )
+                    </div>
+                  </td>
+                </tr>
+                <tr>
+                  <td width="24%">Umur/ Jenis Kelamin</td>
+                  <td width="1%">:</td>
+                  <td>
+                    <div style="border-bottom: 1px solid rgb(150, 150, 150); text-transform: uppercase;">
+                      {$skdp.umur} / <span style="text-transform: capitalize;"> {if: $skdp.jk == 'L'} Laki - laki {else} Perempuan {/if}
+                      </span>
+                    </div>
+                  </td>
+                </tr>
+                <tr>
+                    <td width="24%">Alamat</td>
+                    <td width="1%">:</td>
+                    <td>
+                        <div style="border-bottom: 1px solid rgb(150, 150, 150);">
+                            {$skdp.alamat}
+                        </div>
+                    </td>
+                </tr>
+                <tr>
+                    <td width="24%">Pekerjaan</td>
+                    <td width="1%">:</td>
+                    <td>
+                        <div style="border-bottom: 1px solid rgb(150, 150, 150);">
+                            {$skdp.pekerjaan}
+                        </div>
+                    </td>
+                </tr>
+                <tr>
+                    <td width="24%">Tanggal MRS</td>
+                    <td width="1%">:</td>
+                    <td>
+                        <div style="border-bottom: 1px solid rgb(150, 150, 150);">
+                            {?=date('d/m/Y',strtotime($skdp.tgl_masuk))?}
+                        </div>
+                    </td>
+                </tr>
+                <tr>
+                    <td width="24%">Tanggal KRS</td>
+                    <td width="1%">:</td>
+                    <td>
+                        <div style="border-bottom: 1px solid rgb(150, 150, 150);">
+                            {?=date('d/m/Y',strtotime($skdp.tgl_keluar))?}
+                        </div>
+                    </td>
+                </tr>
+                <tr>
+                    <td width="24%">Diagnosa</td>
+                    <td width="1%">:</td>
+                    <td>
+                        <div style="border-bottom: 1px solid rgb(150, 150, 150);">
+                            {$skdp.diagnosa}
+                        </div>
+                    </td>
+                </tr>
+                <tr>
+                    <td width="24%">Hari / Tanggal Kontrol</td>
+                    <td width="1%">:</td>
+                    <td>
+                        <div style="border-bottom: 1px solid rgb(150, 150, 150);">
+                            {$skdp.hr_kontrol} ,{?=date('d/m/Y',strtotime($skdp.tanggal_datang))?}
+                        </div>
+                    </td>
+                </tr>
+                <tr>
+                    <td width="24%">Keterangan Pulang</td>
+                    <td width="1%">:</td>
+                    <td>
+                        <div style="border-bottom: 1px solid rgb(150, 150, 150);">
+                            {if: $skdp.stts_pulang == 'Sehat'}
+                            <span style="border: 2px solid rgb(100, 100, 100); border-radius: 80%;"> Boleh Pulang </span> / APS / Dirujuk
+                            {elseif: $skdp.stts_pulang == 'APS'}
+                            Boleh Pulang / <span style="border: 2px solid rgb(100, 100, 100); border-radius: 80%;"> APS </span> / Dirujuk
+                            {elseif: $skdp.stts_pulang == 'Rujuk'}
+                            Boleh Pulang / APS /<span style="border: 2px solid rgb(100, 100, 100); border-radius: 80%;">  Dirujuk </span>
+                            {else}
+                            <span style="color: red;">Pasien Belum Dipulangkan!</span>
+                            {/if}
+                        </div>
+                    </td>
+                </tr>
+              </table>
+              <table width="100%">
+                  <tr>
+                      <td style="vertical-align:top; text-align: justify;" width="50%">
+                        <table width="100%" style="margin-top: 15px;" cellspacing="0">
+                          <tr style="vertical-align:top; text-align: justify;">
+                            <td width="48%">Terapi Pulang</td>
+                            <td width="2%">:</td>
+                            <td>
+                              <div class="terapi"> {?=nl2br($skdp.terapi)?} </div>
+                            </td>
+                          </tr>
+                          <tr style="vertical-align:top;">
+                            <td width="48%" style="padding-top: 5px;">Keterangan</td>
+                            <td width="2%" style="padding-top: 5px;">:</td>
+                            <td style="padding-top: 5px;">
+                              <div class="terapi"> {?=nl2br($skdp.alasan2)?} </div>
+                            </td>
+                          </tr>
+                        </table>
+                      </td>
+                      <td style="vertical-align:top; text-align: center;" width="50%">
+                        <table width="100%" style="margin-top: 15px; text-align: center;" cellspacing="0">
+                          <tr>
+                              <td>
+                                  <span style="text-transform: capitalize;">{$settings.kota}</span>, 
+                                  <span style="border-bottom: 1px solid rgb(150, 150, 150);">
+                                  &nbsp; {?=date('d / m / Y',strtotime($skdp.tgl_keluar))?} &nbsp;
+                                  </span>
+                              </td>
+                          </tr>
+                          <tr>
+                              <td>
+                                  Dokter yang merawat / Kepala Ruang
+                              </td>
+                          </tr>
+                          <tr>
+                              <td>
+                                  <div class="qrcodeDokter" id="qrimage"></div>
+                                  <script>
+                                    jQuery('.qrcodeDokter').qrcode({
+                                      width : 80,
+                                      height : 80,
+                                      text : 'Dokter : {$skdp.nm_dokter}',
+                                    });
+                                  </script>
+                              </td>
+                          </tr>
+                          <tr>
+                              <td>
+                                  (<span style="border-bottom: 1px solid rgb(150, 150, 150);">{$skdp.nm_dokter}</span>)
+                              </td>
+                          </tr>
+                        </table>
+                    </td>
+                </tr>
+              </table>
+            </td>
+            </tr>
+        </table>
+      </center>
+    </div>
+  </fieldset>
+  <br><br><br>
+  {/if}
   {if: $berkas_digital_pasien}
   <!-- Berkas Digital -->
   <fieldset style="page-break-before:always;">

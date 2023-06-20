@@ -147,6 +147,29 @@
                         </td>
                         <td>
                           <table>
+                            {if: empty($value.berkas_skdp)}
+                            <tr>
+                              <td>
+                                <a href="{$value.suratKontrol}"  data-toggle="modal" data-target="#moduleModalSKDP" class="btn btn-info btn-xs" target="_blank">Ambil Surat Kontrol/SKDP</a>
+                              </td>
+                            </tr>
+                            {else}
+                            <tr>
+                              <td>
+                                <button class="btn btn-danger btn-xs hapus_berkas_skdp" 
+                                data-no_rawat="{?= convertNoRawat($value.berkas_skdp.no_rawat) ?}" 
+                                data-no_rawat_skdp="{?= convertNoRawat($value.berkas_skdp.no_rawat_skdp) ?}" 
+                                target="_blank">Hapus Surat Kontrol/SKDP</button>
+                              </td>
+                            </tr>
+                            <tr>
+                              <td>
+                                <small>No Rawat SKDP :</small> <br>
+                                <a>{$value.berkas_skdp.no_rawat_skdp}</a>
+                              </td>
+                            </tr>
+                            <tr><td>&nbsp;</td></tr>
+                            {/if}
                             <tr><td><form action="{?=url(ADMIN.'/pasien_galleries/add')?}" method="POST" target="_blank"><input type="hidden" name="name" value="{$value.no_rkm_medis}"><input type="submit" class="btn btn-info btn-xs" value="Unggah Berkas Pasien" /></form></td></tr>
                             {if: !empty($value.berkas_digital_pasien)}
                             {loop: $value.berkas_digital_pasien as $data}
@@ -177,6 +200,13 @@
     </div>
 </article>
 <!-- Modal -->
+<div class="modal fade" id="moduleModalSKDP" tabindex="-1" role="dialog">
+  <div class="modal-dialog modal-md" role="document">
+      <div class="modal-content">
+          ...
+      </div>
+  </div>
+</div>
 <div class="modal fade" id="moduleModal" tabindex="-1" role="dialog">
     <div class="modal-dialog modal-lg" style="width:1120px;" role="document">
         <div class="modal-content">
@@ -236,6 +266,35 @@
       // ketika ditekan tombol ok
       if (result){
         window.open(baseURL + '/vedika/hapusberkas/' + no_rawat + '/' + nama_file + '?t=' + mlite.token, '_blank');
+      }
+    });
+    event.stopPropagation();
+    return false;
+  });
+</script>
+
+<script type="text/javascript">
+  // ketika tombol hapus ditekan
+  $("#display").on("click",".hapus_berkas_skdp", function(event){
+    var baseURL = mlite.url + '/' + mlite.admin;
+    event.preventDefault();
+    var url = baseURL + '/vedika/hapussuratkontrol?t=' + mlite.token;
+    var no_rawat = $(this).attr("data-no_rawat");
+    var no_rawat_skdp = $(this).attr("data-no_rawat_skdp");
+    
+    bootbox.confirm("Apakah Anda yakin ingin menghapus data ini?", function(result){
+      // ketika ditekan tombol ok
+      if (result){
+        var urlget = baseURL + '/vedika/hapussuratkontrol/' + no_rawat + '/' + no_rawat_skdp + '?t=' + mlite.token;
+        $.get(urlget, function(data){
+          data = JSON.parse(data)
+        	if(data.code == 'ok'){
+            	alert(data.message)
+              window.location.reload()
+            } else {
+            	alert(data.message)
+            }
+        })
       }
     });
     event.stopPropagation();

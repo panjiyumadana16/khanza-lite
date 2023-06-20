@@ -43,10 +43,8 @@ define('BASIC_MODULES', serialize([
     6 => 'farmasi',
     8 => 'users',
     7 => 'modules',
-   10 => 'wagateway'
+    10 => 'wagateway'
 ]));
 
 // Developer mode
-define('DEV_MODE', false);
-
-?>
+define('DEV_MODE', true);

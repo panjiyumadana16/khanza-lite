@@ -286,12 +286,15 @@ class Admin extends AdminModule
           }
         }
 
+        $berkas_skdp = $this->core->db('ambil_skdp')->where('no_rawat', $row['no_rawat'])->oneArray();
+
         $row = htmlspecialchars_array($row);
         $row['no_sep'] = $this->_getSEPInfo('no_sep', $row['no_rawat']);
         $row['no_peserta'] = $this->_getSEPInfo('no_kartu', $row['no_rawat']);
         $row['no_rujukan'] = $this->_getSEPInfo('no_rujukan', $row['no_rawat']);
         $row['kd_penyakit'] = $this->_getDiagnosa('kd_penyakit', $row['no_rawat'], $row['status_lanjut']);
         $row['nm_penyakit'] = $this->_getDiagnosa('nm_penyakit', $row['no_rawat'], $row['status_lanjut']);
+        $row['berkas_skdp'] = $berkas_skdp;
         $row['berkas_digital'] = $berkas_digital;
         $row['berkas_digital_pasien'] = $berkas_digital_pasien;
         $row['formSepURL'] = url([ADMIN, 'vedika', 'formsepvclaim', '?no_rawat=' . $row['no_rawat']]);
@@ -300,6 +303,7 @@ class Admin extends AdminModule
         $row['status_pengajuan'] = $this->db('mlite_vedika')->where('nosep', $this->_getSEPInfo('no_sep', $row['no_rawat']))->desc('id')->limit(1)->toArray();
         $row['berkasPasien'] = url([ADMIN, 'vedika', 'berkaspasien', $this->getRegPeriksaInfo('no_rkm_medis', $row['no_rawat'])]);
         $row['berkasPerawatan'] = url([ADMIN, 'vedika', 'berkasperawatan', $this->convertNorawat($row['no_rawat'])]);
+        $row['suratKontrol'] = url([ADMIN, 'vedika', 'suratkontrol', $this->convertNorawat($row['no_rawat'])]);
         if ($type == 'ranap') {
           $row['tgl_registrasi'] = $row['tgl_keluar'];
           $row['jam_reg'] = $row['jam_keluar'];
@@ -1730,6 +1734,29 @@ class Admin extends AdminModule
       ->where('no_rawat', $this->revertNorawat($id))
       ->oneArray();
 
+    $hari = ['Minggu','Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'];
+
+    $skdp = $this->db('ambil_skdp')
+      ->join('skdp_bpjs','skdp_bpjs.no_rawat = ambil_skdp.no_rawat_skdp')
+      ->join('pasien', 'pasien.no_rkm_medis = skdp_bpjs.no_rkm_medis')
+      ->join('dokter', 'dokter.kd_dokter=skdp_bpjs.kd_dokter')
+      ->join('kamar_inap', 'kamar_inap.no_rawat=skdp_bpjs.rtl2')
+      ->select([
+        'pasien.no_rkm_medis AS no_rm',
+        'pasien.*',
+        'skdp_bpjs.*',
+        'kamar_inap.*',
+        'dokter.nm_dokter'
+        ])
+      ->where('ambil_skdp.no_rawat', $this->revertNorawat($id))
+      ->oneArray();
+    if($skdp){
+      $skdp['umur'] = $this->hitungUmur($skdp['tgl_lahir']);
+
+      $skdp['hr_kontrol'] =  date('w',strtotime($skdp['tanggal_datang']));
+      $skdp['hr_kontrol'] = $hari[$skdp['hr_kontrol']];
+    }
+
     $this->tpl->set('pasien', $pasien);
     $this->tpl->set('reg_periksa', $reg_periksa);
     //$this->tpl->set('rujukan_internal', $rujukan_internal);
@@ -1753,7 +1780,8 @@ class Admin extends AdminModule
     $this->tpl->set('obat_operasi', $obat_operasi);
     $this->tpl->set('resep_pulang', $resep_pulang);
     $this->tpl->set('laporan_operasi', $laporan_operasi);
-
+    
+    $this->tpl->set('skdp', $skdp);
     $this->tpl->set('berkas_digital', $berkas_digital);
     $this->tpl->set('berkas_digital_pasien', $berkas_digital_pasien);
     $this->tpl->set('hasil_radiologi', $this->db('hasil_radiologi')->where('no_rawat', $this->revertNorawat($id))->toArray());
@@ -1773,6 +1801,58 @@ class Admin extends AdminModule
     $this->tpl->set('set_status', $set_status);
     $this->tpl->set('vedika', $vedika);
     echo $this->tpl->draw(MODULES . '/vedika/view/admin/setstatus.html', true);
+    exit();
+  }
+
+  public function anySuratKontrol($no_rawat)
+  {
+    $this->assign['no_rawat'] = revertNorawat($no_rawat);
+    $this->tpl->set('suratkontrol', $this->assign);
+
+    echo $this->tpl->draw(MODULES . '/vedika/view/admin/ambilskdp.html', true);
+    exit();
+  }
+
+  public function postSaveSuratKontrol()
+  {
+    $check_skdp = $this->core->db('skdp_bpjs')->where('tanggal_datang',$_POST['tanggal_surat'])->where('no_antrian',$_POST['no_surat'])->oneArray();
+    $result = [];
+    if ($check_skdp == '' OR $check_skdp == NULL) {
+      $result['code'] = 'err';
+      $result['message'] = '<b>Gagal!</b> Tidak ada data Surat Kontrol dengan Tanggal `'.$_POST['tanggal_surat'].'` dan No. Surat `'.$_POST['no_surat'].'`.'; 
+    } else {
+      $check_reg = $this->core->db('reg_periksa')->where('no_rawat',$_POST['no_rawat'])->where('no_rkm_medis',$check_skdp['no_rkm_medis'])->oneArray();
+      if ($check_reg == '' OR $check_reg == NULL OR $check_reg['no_rkm_medis'] != $check_skdp['no_rkm_medis']) {
+        $result['code'] = 'err';
+        $result['message'] = '<b>Gagal!</b> Surat Kontrol tidak cocok dengan data pemeriksaan pasien.';
+      } else {
+        $query = $this->core->db('ambil_skdp')->save(['no_rawat' => $_POST['no_rawat'], 'no_rawat_skdp' => $check_skdp['no_rawat']]);
+        if ($query) {
+          $result['code'] = 'ok';
+          $result['message'] = '<b>Berhasil menyimpan Surat Kontrol!</b>';
+        }
+      }
+    }
+    echo json_encode($result);
+    exit();
+  }
+
+  public function getHapusSuratKontrol($no_rawat, $no_rawat_skdp)
+  {
+    $no_rawat = $this->revertNorawat($no_rawat);
+    $no_rawat_skdp = $this->revertNorawat($no_rawat_skdp);
+    $query = $this->core->db('ambil_skdp')->where('no_rawat',$no_rawat)->where('no_rawat_skdp',$no_rawat_skdp)->delete();
+
+    $result = [];
+    if ($query) {
+      $result['code'] = 'ok';
+      $result['message'] = 'Berhasil hapus Surat Kontrol!';
+    } else {
+      $result['code'] = 'err';
+      $result['message'] = 'Gagal hapus Surat Kontrol!';
+    }
+
+    echo json_encode($result);
     exit();
   }
 
@@ -1948,6 +2028,20 @@ class Admin extends AdminModule
     //echo 'Hapus';
     exit();
   }
+
+  public function hitungUmur($tanggal_lahir)
+    {
+      	$birthDate = new \DateTime($tanggal_lahir);
+      	$today = new \DateTime("today");
+      	$umur = "0 Th 0 Bl 0 Hr";
+        if ($birthDate < $today) {
+        	$y = $today->diff($birthDate)->y;
+        	$m = $today->diff($birthDate)->m;
+        	$d = $today->diff($birthDate)->d;
+          $umur =  $y." Th ".$m." Bl ".$d." Hr";
+        }
+      	return $umur;
+    }
 
   public function getJavascript()
   {

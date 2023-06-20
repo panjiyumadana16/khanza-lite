@@ -1,0 +1,66 @@
+<div class="modal-header">
+    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+    <h4 class="modal-title">Ambil Surat Kontrol / SKDP</h4>
+    
+</div>
+<div class="modal-body">
+  
+  <div class="panel-default">
+      <div class="panel-body row">
+        <div class="col-md-12" id="notif-skdp"></div>
+        <div class="form-group col-md-12">
+          <label>Nomor Rawat</label>
+          <input type="text" class="form-control" name="no_rawat" value="{$suratkontrol.no_rawat}" readonly>
+        </div>
+        <div class="form-group col-md-6">
+          <label>Nomor Surat Kontrol</label>
+          <input type="text" class="form-control" name="no_surat" value="">
+        </div>
+        <div class="form-group col-md-6">
+          <label>Tanggal Surat Kontrol</label>
+          <input type="text" name="tanggal_surat" class="form-control tanggal" />
+        </div>
+        <div class="col-md-12">
+          <button id="simpanskdp" class="btn btn-primary">Simpan</button>
+        </div>
+      </div>
+  </div>
+</div>
+<div class="modal-footer">
+    <button type="button" class="btn btn-primary" data-dismiss="modal">Tutup</button>
+</div>
+<script type="text/javascript">
+  $('select').selectator();
+  $('.tanggal').datetimepicker({
+    format: 'YYYY-MM-DD',
+    locale: 'id'
+  });
+  $('#notif-skdp').hide()
+
+  $('#simpanskdp').click( function(){
+    var baseURL = mlite.url + '/' + mlite.admin;
+    var uri = baseURL + '/vedika/savesuratkontrol?t=' + mlite.token;
+
+    var no_rawat = $('input[name=no_rawat]').val()
+    var no_surat = $('input[name=no_surat]').val()
+    var tanggal_surat = $('input[name=tanggal_surat]').val()
+
+    $.post(uri,{
+      no_rawat : no_rawat, no_surat : no_surat, tanggal_surat : tanggal_surat
+    }, function(result){
+      var res = JSON.parse(result)
+      if(res.code == 'err'){
+        $('#notif-skdp').show(500)
+        $('#notif-skdp').addClass('text-danger')
+        $('#notif-skdp').html(res.message)
+      } else {
+        $('#notif-skdp').show(500)
+        $('#notif-skdp').addClass('text-success text-center')
+        $('#notif-skdp').html(res.message)
+        window.location.reload()
+      }
+    })
+    $('#notif-skdp').removeClass().addClass('col-md-12')
+  })
+
+</script>

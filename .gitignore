@@ -10,8 +10,4 @@ webapps
 backup/
 plugins/apotek_online
 plugins/simrsp
-plugins/rawat_inap/Admin.php
-plugins/rawat_inap/js/admin/rawat_inap.js
-plugins/rawat_inap/view/admin/display.html
-plugins/rawat_inap/view/admin/form.kontrol.html
-.gitignore
+config.php
