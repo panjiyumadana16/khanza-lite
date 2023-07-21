@@ -51,7 +51,7 @@ class Admin extends AdminModule
         $status_periksa = '';
         $status_bayar = '';
         $status_pulang = '';
-        $type = $_POST['status'];
+        $type = isset_or($_POST['status']);
 
         if(isset($_POST['periode_rawat_jalan'])) {
           $tgl_kunjungan = $_POST['periode_rawat_jalan'];
@@ -300,18 +300,24 @@ class Admin extends AdminModule
           ->oneArray();
           if($rawat) {
             $stts_daftar ="Transaki tanggal ".date('Y-m-d', strtotime($rawat['tgl_registrasi']))." belum diselesaikan" ;
+            $stts_daftar_hidden = $stts_daftar;
+            if($this->settings->get('settings.cekstatusbayar') == 'false'){
+              $stts_daftar_hidden = 'Lama';
+            }
             $bg_status = 'text-danger';
           } else {
             $result = $this->core->mysql('reg_periksa')->where('no_rkm_medis', $_POST['no_rkm_medis'])->oneArray();
             if($result >= 1) {
               $stts_daftar = 'Lama';
               $bg_status = 'text-info';
+              $stts_daftar_hidden = $stts_daftar;
             } else {
               $stts_daftar = 'Baru';
               $bg_status = 'text-success';
+              $stts_daftar_hidden = $stts_daftar;
             }
           }
-        echo $this->draw('stts.daftar.html', ['stts_daftar' => $stts_daftar, 'bg_status' =>$bg_status]);
+        echo $this->draw('stts.daftar.html', ['stts_daftar' => $stts_daftar, 'stts_daftar_hidden' => $stts_daftar_hidden, 'bg_status' =>$bg_status]);
       } else {
         $rawat = $this->core->mysql('reg_periksa')
           ->where('no_rawat', $_POST['no_rawat'])
@@ -409,9 +415,9 @@ class Admin extends AdminModule
       $pj_lab = $this->core->mysql('dokter')->where('kd_dokter', $this->settings->get('settings.pj_laboratorium'))->oneArray();
       $qr = QRCode::getMinimumQRCode($pj_lab['nm_dokter'], QR_ERROR_CORRECT_LEVEL_L);
       $im = $qr->createImage(4, 4);
-      imagepng($im, BASE_DIR .'/admin/tmp/qrcode.png');
+      imagepng($im, BASE_DIR .'/'.ADMIN.'/tmp/qrcode.png');
       imagedestroy($im);
-      $qrCode = "../../admin/tmp/qrcode.png";
+      $qrCode = "../../".ADMIN."/tmp/qrcode.png";
 
       $pasien = $this->core->mysql('reg_periksa')
         ->join('pasien', 'pasien.no_rkm_medis=reg_periksa.no_rkm_medis')
@@ -526,10 +532,10 @@ class Admin extends AdminModule
       $qr=QRCode::getMinimumQRCode($this->core->getUserInfo('fullname', null, true),QR_ERROR_CORRECT_LEVEL_L);
       //$qr=QRCode::getMinimumQRCode('Petugas: '.$this->core->getUserInfo('fullname', null, true).'; Lokasi: '.UPLOADS.'/invoices/'.$result['kd_billing'].'.pdf',QR_ERROR_CORRECT_LEVEL_L);
       $im=$qr->createImage(4,4);
-      imagepng($im,BASE_DIR.'/admin/tmp/qrcode.png');
+      imagepng($im,BASE_DIR.'/'.ADMIN.'/tmp/qrcode.png');
       imagedestroy($im);
 
-      $image = BASE_DIR."/admin/tmp/qrcode.png";
+      $image = BASE_DIR."/".ADMIN."/tmp/qrcode.png";
 
       $pdf->Cell(120 ,5,'',0,0);
       $pdf->Cell(64, 5, $pdf->Image($image, $pdf->GetX(), $pdf->GetY(),30,30,'png'), 0, 0, 'C', false );
@@ -553,7 +559,8 @@ class Admin extends AdminModule
         'dokter_perujuk' => $dokter_perujuk['nama'],
         'pasien' => $pasien,
         'filename' => $filename,
-        'no_rawat' => $_GET['no_rawat']
+        'no_rawat' => $_GET['no_rawat'],
+        'wagateway' => $this->settings->get('wagateway')
       ]);
       exit();
     }
@@ -566,9 +573,9 @@ class Admin extends AdminModule
 
       $qr = QRCode::getMinimumQRCode($pj_lab['nm_dokter'], QR_ERROR_CORRECT_LEVEL_L);
       $im = $qr->createImage(4, 4);
-      imagepng($im, BASE_DIR .'/admin/tmp/qrcode.png');
+      imagepng($im, BASE_DIR .'/'.ADMIN.'/tmp/qrcode.png');
       imagedestroy($im);
-      $qrCode = "../../admin/tmp/qrcode.png";
+      $qrCode = "../../".ADMIN."/tmp/qrcode.png";
 
       $pasien = $this->core->mysql('reg_periksa')
         ->join('pasien', 'pasien.no_rkm_medis=reg_periksa.no_rkm_medis')
@@ -1085,10 +1092,10 @@ class Admin extends AdminModule
       $qr=QRCode::getMinimumQRCode($this->core->getUserInfo('fullname', null, true),QR_ERROR_CORRECT_LEVEL_L);
       //$qr=QRCode::getMinimumQRCode('Petugas: '.$this->core->getUserInfo('fullname', null, true).'; Lokasi: '.UPLOADS.'/invoices/'.$result['kd_billing'].'.pdf',QR_ERROR_CORRECT_LEVEL_L);
       $im=$qr->createImage(4,4);
-      imagepng($im,BASE_DIR.'/admin/tmp/qrcode.png');
+      imagepng($im,BASE_DIR.'/'.ADMIN.'/tmp/qrcode.png');
       imagedestroy($im);
 
-      $image = BASE_DIR."/admin/tmp/qrcode.png";
+      $image = BASE_DIR."/".ADMIN."/tmp/qrcode.png";
 
       $pdf->Cell(120 ,5,'',0,0);
       $pdf->Cell(64, 5, $pdf->Image($image, $pdf->GetX(), $pdf->GetY(),30,30,'png'), 0, 0, 'C', false );
@@ -1150,10 +1157,17 @@ class Admin extends AdminModule
 
       // Setting the email content
       $mail->IsHTML(true);
-      $mail->Subject = "Detail pembayaran anda di ".$this->core->settings->get('settings.nama_instansi');
+      $mail->Subject = "Hasil pemeriksaan laboratorium anda di ".$this->core->settings->get('settings.nama_instansi');
       $mail->Body = $temp;
 
       $mail->send();
+
+      if (!$mail->send()) {
+        echo 'Error: ' . $mail->ErrorInfo;
+      } else {
+        echo 'Pesan email telah dikirim.';
+      }
+
     }
 
 

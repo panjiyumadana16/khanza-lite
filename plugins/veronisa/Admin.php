@@ -91,11 +91,11 @@ class Admin extends AdminModule
         $response = curl_exec($curl);
 
         curl_close($curl);
-        //echo $response;
-        if($response == 'Success') {
-          $this->notify('success', 'Sukses menambahkan gambar');
+        $json = json_decode($response, true);
+        if($json['status'] == 'Success') {
+          echo '<br><img src="'.WEBAPPS_URL.'/berkasrawat/'.$json['msg'].'" width="150" />';
         } else {
-          $this->notify('failure', 'Gagal menambahkan gambar');
+          echo 'Gagal menambahkan gambar';
         }
 
       } else {
@@ -514,11 +514,11 @@ class Admin extends AdminModule
     $qr=QRCode::getMinimumQRCode($this->core->getUserInfo('fullname', null, true),QR_ERROR_CORRECT_LEVEL_L);
     //$qr=QRCode::getMinimumQRCode('Petugas: '.$this->core->getUserInfo('fullname', null, true).'; Lokasi: '.UPLOADS.'/invoices/'.$result['kd_billing'].'.pdf',QR_ERROR_CORRECT_LEVEL_L);
     $im=$qr->createImage(4,4);
-    imagepng($im,BASE_DIR.'/admin/tmp/qrcode.png');
+    imagepng($im,BASE_DIR.'/'.ADMIN.'/tmp/qrcode.png');
     imagedestroy($im);
 
-    $image = BASE_DIR."/admin/tmp/qrcode.png";
-    $qrCode = "../../../admin/tmp/qrcode.png";
+    $image = BASE_DIR."/".ADMIN."/tmp/qrcode.png";
+    $qrCode = "../../../".ADMIN."/tmp/qrcode.png";
 
     $this->tpl->set('billing_mlite_detail', $result_detail);
     $this->tpl->set('billing_mlite', $billing_result);

@@ -51,7 +51,7 @@ class Admin extends AdminModule
         $status_periksa = '';
         $status_bayar = '';
         $status_pulang = '';
-        $type = $_POST['status'];
+        $type = isset_or($_POST['status']);
 
         if(isset($_POST['periode_rawat_jalan'])) {
           $tgl_kunjungan = $_POST['periode_rawat_jalan'];
@@ -300,18 +300,24 @@ class Admin extends AdminModule
           ->oneArray();
           if($rawat) {
             $stts_daftar ="Transaki tanggal ".date('Y-m-d', strtotime($rawat['tgl_registrasi']))." belum diselesaikan" ;
+            $stts_daftar_hidden = $stts_daftar;
+            if($this->settings->get('settings.cekstatusbayar') == 'false'){
+              $stts_daftar_hidden = 'Lama';
+            }
             $bg_status = 'text-danger';
           } else {
             $result = $this->core->mysql('reg_periksa')->where('no_rkm_medis', $_POST['no_rkm_medis'])->oneArray();
             if($result >= 1) {
               $stts_daftar = 'Lama';
               $bg_status = 'text-info';
+              $stts_daftar_hidden = $stts_daftar;
             } else {
               $stts_daftar = 'Baru';
               $bg_status = 'text-success';
+              $stts_daftar_hidden = $stts_daftar;
             }
           }
-        echo $this->draw('stts.daftar.html', ['stts_daftar' => $stts_daftar, 'bg_status' =>$bg_status]);
+        echo $this->draw('stts.daftar.html', ['stts_daftar' => $stts_daftar, 'stts_daftar_hidden' => $stts_daftar_hidden, 'bg_status' =>$bg_status]);
       } else {
         $rawat = $this->core->mysql('reg_periksa')
           ->where('no_rawat', $_POST['no_rawat'])
@@ -409,9 +415,9 @@ class Admin extends AdminModule
       $pj_radiologi = $this->core->mysql('dokter')->where('kd_dokter', $this->settings->get('settings.pj_radiologi'))->oneArray();
       $qr = QRCode::getMinimumQRCode($pj_radiologi['nm_dokter'], QR_ERROR_CORRECT_LEVEL_L);
       $im = $qr->createImage(4, 4);
-      imagepng($im, BASE_DIR .'/admin/tmp/qrcode.png');
+      imagepng($im, BASE_DIR .'/'.ADMIN.'/tmp/qrcode.png');
       imagedestroy($im);
-      $qrCode = "../../admin/tmp/qrcode.png";
+      $qrCode = "../../".ADMIN."/tmp/qrcode.png";
 
       $pasien = $this->core->mysql('reg_periksa')
         ->join('pasien', 'pasien.no_rkm_medis=reg_periksa.no_rkm_medis')
@@ -570,10 +576,10 @@ class Admin extends AdminModule
 
       $qr=QRCode::getMinimumQRCode($this->core->getUserInfo('fullname', null, true),QR_ERROR_CORRECT_LEVEL_L);
       $im=$qr->createImage(4,4);
-      imagepng($im,BASE_DIR.'/admin/tmp/qrcode.png');
+      imagepng($im,BASE_DIR.'/'.ADMIN.'/tmp/qrcode.png');
       imagedestroy($im);
 
-      $image = BASE_DIR."/admin/tmp/qrcode.png";
+      $image = BASE_DIR."/".ADMIN."/tmp/qrcode.png";
 
       $pdf->Text(140,290,$settings['kota'].', '.date('Y-m-d'));//end of line
       $pdf->Image($image, 140, 295, '30', '30', 'png');
@@ -597,7 +603,8 @@ class Admin extends AdminModule
         'dokter_perujuk' => $dokter_perujuk['nama'],
         'pasien' => $pasien,
         'filename' => $filename,
-        'no_rawat' => $_GET['no_rawat']
+        'no_rawat' => $_GET['no_rawat'],
+        'wagateway' => $this->settings->get('wagateway')
       ]);
       exit();
     }
@@ -610,9 +617,9 @@ class Admin extends AdminModule
 
       $qr = QRCode::getMinimumQRCode($pj_radiologi['nm_dokter'], QR_ERROR_CORRECT_LEVEL_L);
       $im = $qr->createImage(4, 4);
-      imagepng($im, BASE_DIR .'/admin/tmp/qrcode.png');
+      imagepng($im, BASE_DIR .'/'.ADMIN.'/tmp/qrcode.png');
       imagedestroy($im);
-      $qrCode = "../../admin/tmp/qrcode.png";
+      $qrCode = "../../".ADMIN."/tmp/qrcode.png";
 
       $pasien = $this->core->mysql('reg_periksa')
         ->join('pasien', 'pasien.no_rkm_medis=reg_periksa.no_rkm_medis')
@@ -805,6 +812,7 @@ class Admin extends AdminModule
     public function postValidasiPermintaanRadiologi()
     {
       $permintaan_radiologi = $this->core->mysql('permintaan_radiologi')->where('no_rawat', $_POST['no_rawat'])->where('noorder', $_POST['noorder'])->oneArray();
+      $validasi_permintaan = $this->core->mysql('permintaan_radiologi')->where('no_rawat', $_POST['no_rawat'])->where('noorder', $_POST['noorder'])->save(['tgl_sampel' => date('Y-m-d'), 'jam_sampel' => date('H:i:s')]);
       $permintaan_pemeriksaan_radiologi = $this->core->mysql('permintaan_pemeriksaan_radiologi')->where('noorder', $_POST['noorder'])->toArray();
       foreach ($permintaan_pemeriksaan_radiologi as $row) {
         $jns_perawatan = $this->core->mysql('jns_perawatan_radiologi')->where('kd_jenis_prw', $row['kd_jenis_prw'])->oneArray();
@@ -960,6 +968,66 @@ class Admin extends AdminModule
             }
         }
         exit();
+    }
+
+    public function postKirimEmail() {
+      $email = $_POST['email'];
+      $nama_lengkap = $_POST['receiver'];
+      $file = $_POST['file'];
+      $this->sendEmail($email, $nama_lengkap, $file);
+      exit();
+    }
+
+    private function sendEmail($email, $receiver, $file)
+    {
+      $binary_content = file_get_contents($file);
+
+      if ($binary_content === false) {
+         throw new Exception("Could not fetch remote content from: '$file'");
+      }
+
+	    $mail = new PHPMailer(true);
+      $temp  = @file_get_contents(MODULES."/radiologi/email/email.send.html");
+
+      $temp  = str_replace("{SITENAME}", $this->core->settings->get('settings.nama_instansi'), $temp);
+      $temp  = str_replace("{ADDRESS}", $this->core->settings->get('settings.alamat')." - ".$this->core->settings->get('settings.kota'), $temp);
+      $temp  = str_replace("{TELP}", $this->core->settings->get('settings.nomor_telepon'), $temp);
+      //$temp  = str_replace("{NUMBER}", $number, $temp);
+
+	    //$mail->SMTPDebug = SMTP::DEBUG_SERVER; // for detailed debug output
+      $mail->isSMTP();
+      $mail->Host = $this->settings->get('api.apam_smtp_host');
+      $mail->SMTPAuth = true;
+      $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
+      $mail->Port = $this->settings->get('api.apam_smtp_port');
+
+      $mail->Username = $this->settings->get('api.apam_smtp_username');
+      $mail->Password = $this->settings->get('api.apam_smtp_password');
+
+      // Sender and recipient settings
+      $mail->setFrom($this->core->settings->get('settings.email'), $this->core->settings->get('settings.nama_instansi'));
+      $mail->addAddress($email, $receiver);
+      $mail->AddStringAttachment($binary_content, "hasil_radiologi.pdf", $encoding = 'base64', $type = 'application/pdf');
+
+      // Setting the email content
+      $mail->IsHTML(true);
+      $mail->Subject = "Hasil pemeriksaan radiologi anda di ".$this->core->settings->get('settings.nama_instansi');
+      $mail->Body = $temp;
+
+      $mail->send();
+
+      if (!$mail->send()) {
+        echo 'Error: ' . $mail->ErrorInfo;
+      } else {
+        echo 'Pesan email telah dikirim.';
+      }
+
+    }
+
+    public function postCekWaktu()
+    {
+      echo date('H:i:s');
+      exit();
     }
 
     public function getJavascript()
